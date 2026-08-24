@@ -42,12 +42,4 @@ public final class DomainEventSubscribersInformation {
     public Collection<DomainEventSubscriberInformation> all() {
         return information.values();
     }
-
-    public String[] rabbitMqFormattedNames() {
-        return information.values()
-                          .stream()
-                          .map(DomainEventSubscriberInformation::formatRabbitMqQueueName)
-                          .distinct()
-                          .toArray(String[]::new);
-    }
 }
