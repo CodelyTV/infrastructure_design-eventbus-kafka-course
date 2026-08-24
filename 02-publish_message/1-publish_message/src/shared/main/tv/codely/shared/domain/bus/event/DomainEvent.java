@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public abstract class DomainEvent {
-    private String aggregateId;
+    protected String aggregateId;
     private String eventId;
     private String occurredOn;
 
