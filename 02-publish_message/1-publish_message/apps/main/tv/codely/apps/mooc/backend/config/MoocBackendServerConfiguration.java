@@ -1,5 +1,6 @@
 package tv.codely.apps.mooc.backend.config;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,9 +11,9 @@ import tv.codely.shared.infrastructure.spring.ApiExceptionMiddleware;
 @Configuration
 public class MoocBackendServerConfiguration {
 
-	private final RequestMappingHandlerMapping mapping;
+	private final ObjectProvider<RequestMappingHandlerMapping> mapping;
 
-	public MoocBackendServerConfiguration(RequestMappingHandlerMapping mapping) {
+	public MoocBackendServerConfiguration(ObjectProvider<RequestMappingHandlerMapping> mapping) {
 		this.mapping = mapping;
 	}
 
@@ -20,7 +21,7 @@ public class MoocBackendServerConfiguration {
 	public FilterRegistrationBean<ApiExceptionMiddleware> apiExceptionMiddleware() {
 		FilterRegistrationBean<ApiExceptionMiddleware> registrationBean = new FilterRegistrationBean<>();
 
-		registrationBean.setFilter(new ApiExceptionMiddleware(mapping));
+		registrationBean.setFilter(new ApiExceptionMiddleware(mapping.getObject()));
 
 		return registrationBean;
 	}

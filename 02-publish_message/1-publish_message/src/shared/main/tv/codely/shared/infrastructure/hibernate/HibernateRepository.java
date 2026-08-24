@@ -20,13 +20,13 @@ public abstract class HibernateRepository<T> {
     }
 
     protected void persist(T entity) {
-        sessionFactory.getCurrentSession().saveOrUpdate(entity);
+        sessionFactory.getCurrentSession().merge(entity);
         sessionFactory.getCurrentSession().flush();
         sessionFactory.getCurrentSession().clear();
     }
 
     protected Optional<T> byId(Identifier id) {
-        return Optional.ofNullable(sessionFactory.getCurrentSession().byId(aggregateClass).load(id));
+        return Optional.ofNullable(sessionFactory.getCurrentSession().find(aggregateClass, id));
     }
 
     protected List<T> byCriteria(Criteria criteria) {

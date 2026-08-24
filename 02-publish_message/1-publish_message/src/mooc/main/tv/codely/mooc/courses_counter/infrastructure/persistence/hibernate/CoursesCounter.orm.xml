@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm https://jakarta.ee/xml/ns/persistence/orm/orm_3_2.xsd"
+                 version="3.2">
+
+    <entity class="tv.codely.mooc.courses_counter.domain.CoursesCounter" access="FIELD">
+        <table name="courses_counter" />
+
+        <attributes>
+            <embedded-id name="id">
+                <attribute-override name="value">
+                    <column name="id" length="36" />
+                </attribute-override>
+            </embedded-id>
+
+            <embedded name="total">
+                <attribute-override name="value">
+                    <column name="total" />
+                </attribute-override>
+            </embedded>
+
+            <basic name="existingCourses">
+                <column name="existing_courses" />
+                <convert converter="tv.codely.mooc.courses_counter.infrastructure.persistence.CourseIdListConverter" />
+            </basic>
+        </attributes>
+    </entity>
+
+    <embeddable class="tv.codely.mooc.courses_counter.domain.CoursesCounterId" access="FIELD" />
+    <embeddable class="tv.codely.mooc.courses_counter.domain.CoursesCounterTotal" access="FIELD" />
+</entity-mappings>

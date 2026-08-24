@@ -1,13 +1,13 @@
-FROM openjdk:21-slim-buster
+FROM eclipse-temurin:25-jdk
 WORKDIR /app
 
 RUN apt update && apt install -y curl git
 
 ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 18.0.0
+ENV NODE_VERSION 22.14.0
 
 RUN mkdir -p $NVM_DIR
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
 RUN . $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION && nvm use default
 

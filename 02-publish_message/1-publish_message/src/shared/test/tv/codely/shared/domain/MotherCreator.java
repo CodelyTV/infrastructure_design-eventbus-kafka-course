@@ -1,6 +1,6 @@
 package tv.codely.shared.domain;
 
-import com.github.javafaker.Faker;
+import net.datafaker.Faker;
 
 public final class MotherCreator {
     private final static Faker faker = new Faker();

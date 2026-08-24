@@ -6,4 +6,7 @@ public final class StepId extends Identifier {
     public StepId(String value) {
         super(value);
     }
+
+    private StepId() {
+    }
 }
