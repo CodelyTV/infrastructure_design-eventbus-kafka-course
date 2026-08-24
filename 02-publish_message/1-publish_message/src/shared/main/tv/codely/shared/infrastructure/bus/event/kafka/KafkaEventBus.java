@@ -22,6 +22,6 @@ public final class KafkaEventBus implements EventBus {
     }
 
     private void publish(DomainEvent event) {
-        template.send(topic, event.aggregateId(), DomainEventJsonSerializer.serialize(event));
+        template.send(topic, event.eventId(), DomainEventJsonSerializer.serialize(event));
     }
 }
