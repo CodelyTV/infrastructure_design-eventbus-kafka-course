@@ -51,6 +51,7 @@ services:
       - backoffice_backend_gradle_cache:/app/.gradle
     depends_on:
       - shared_postgres
+      - shared_kafka
     command: ["./gradlew", "bootRun", "--args", "backoffice_backend server"]
 
   backoffice_frontend_server_java:
@@ -66,6 +67,7 @@ services:
       - backoffice_frontend_gradle_cache:/app/.gradle
     depends_on:
       - shared_postgres
+      - shared_kafka
     command: ["./gradlew", "bootRun", "--args", "backoffice_frontend server"]
 
   mooc_backend_server_java:
@@ -81,6 +83,7 @@ services:
       - mooc_backend_gradle_cache:/app/.gradle
     depends_on:
       - shared_postgres
+      - shared_kafka
     command: ["./gradlew", "bootRun", "--args", "mooc_backend server"]
 
   test_server_java:
@@ -94,6 +97,7 @@ services:
       - test_gradle_cache:/app/.gradle
     depends_on:
       - shared_postgres
+      - shared_kafka
     tty: true
 
 volumes:

@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import tv.codely.shared.domain.bus.event.DomainEvent;
-import tv.codely.shared.domain.bus.event.EventBus;
+import tv.codely.shared.infrastructure.bus.event.spring.SpringApplicationEventBus;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -27,7 +27,7 @@ public abstract class ApplicationTestCase {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private EventBus eventBus;
+	private SpringApplicationEventBus eventBus;
 
 	protected void assertResponse(String endpoint, Integer expectedStatusCode, String expectedResponse) throws Exception {
 		ResultMatcher response = expectedResponse.isEmpty() ? content().string("") : content().json(expectedResponse);

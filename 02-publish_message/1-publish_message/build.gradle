@@ -61,6 +61,7 @@ allprojects {
         implementation 'com.google.guava:guava:33.7.1-jre'
         implementation 'com.fasterxml.jackson.core:jackson-databind'
         implementation 'org.postgresql:postgresql:42.7.13'
+        implementation 'org.springframework.kafka:spring-kafka'
 
         // Test
         testImplementation 'org.junit.jupiter:junit-jupiter-api'
