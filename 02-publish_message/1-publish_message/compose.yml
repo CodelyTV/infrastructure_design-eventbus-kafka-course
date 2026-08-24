@@ -1,44 +1,42 @@
-version: '3'
-
 services:
-  shared_mysql:
-    container_name: codely-java_ddd_example-mysql
-    image: mysql:8
-    platform: linux/amd64
+  shared_postgres:
+    container_name: codely-java_ddd_example-postgres
+    image: postgres:18
+    restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "5432:5432"
     environment:
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      POSTGRES_USER: root
+      POSTGRES_DB: mooc
+      POSTGRES_HOST_AUTH_METHOD: trust
     entrypoint:
       sh -c "
-        echo 'CREATE DATABASE IF NOT EXISTS mooc;CREATE DATABASE IF NOT EXISTS backoffice;' > /docker-entrypoint-initdb.d/init.sql;
-        /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        echo 'CREATE DATABASE backoffice;' > /docker-entrypoint-initdb.d/init.sql;
+        /usr/local/bin/docker-entrypoint.sh postgres
       "
-    command: ["--default-authentication-plugin=mysql_native_password"]
 
-  shared_rabbitmq:
-    container_name: codely-java_ddd_example-rabbitmq
-    image: 'rabbitmq:3.7-management'
-    platform: linux/amd64
+  shared_kafka:
+    container_name: codely-java_ddd_example-kafka
+    image: confluentinc/cp-kafka:8.3.1
     restart: unless-stopped
     ports:
-      - "5630:5672"
-      - "8090:15672"
+      - "9092:9092"
     environment:
-      - RABBITMQ_DEFAULT_USER=codely
-      - RABBITMQ_DEFAULT_PASS=c0d3ly
-
-  backoffice_elasticsearch:
-    container_name: codely-java_ddd_example-elasticsearch
-    image: 'elasticsearch:6.8.4'
-    platform: linux/amd64
-    restart: unless-stopped
-    ports:
-      - "9300:9300"
-      - "9200:9200"
-    environment:
-      - discovery.type=single-node
+      CLUSTER_ID: codely-kafka-cluster
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@shared_kafka:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://shared_kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   backoffice_backend_server_java:
     container_name: codely-java_ddd_example-backoffice_backend_server
@@ -52,9 +50,7 @@ services:
       - .:/app:delegated
       - backoffice_backend_gradle_cache:/app/.gradle
     depends_on:
-      - shared_mysql
-      - shared_rabbitmq
-      - backoffice_elasticsearch
+      - shared_postgres
     command: ["./gradlew", "bootRun", "--args", "backoffice_backend server"]
 
   backoffice_frontend_server_java:
@@ -69,9 +65,7 @@ services:
       - .:/app:delegated
       - backoffice_frontend_gradle_cache:/app/.gradle
     depends_on:
-      - shared_mysql
-      - shared_rabbitmq
-      - backoffice_elasticsearch
+      - shared_postgres
     command: ["./gradlew", "bootRun", "--args", "backoffice_frontend server"]
 
   mooc_backend_server_java:
@@ -86,9 +80,7 @@ services:
       - .:/app:delegated
       - mooc_backend_gradle_cache:/app/.gradle
     depends_on:
-      - shared_mysql
-      - shared_rabbitmq
-      - backoffice_elasticsearch
+      - shared_postgres
     command: ["./gradlew", "bootRun", "--args", "mooc_backend server"]
 
   test_server_java:
@@ -101,9 +93,7 @@ services:
       - .:/app:delegated
       - test_gradle_cache:/app/.gradle
     depends_on:
-      - shared_mysql
-      - shared_rabbitmq
-      - backoffice_elasticsearch
+      - shared_postgres
     tty: true
 
 volumes:
