@@ -22,10 +22,10 @@ public final class Course extends AggregateRoot {
         duration = null;
     }
 
-    public static Course create(CourseId id, CourseName name, CourseDuration duration) {
-        Course course = new Course(id, name, duration);
+    public static Course create(String id, String name, String duration) {
+        Course course = new Course(new CourseId(id), new CourseName(name), new CourseDuration(duration));
 
-        course.record(new CourseCreatedDomainEvent(id.value(), name.value(), duration.value()));
+        course.record(new CourseCreatedDomainEvent(id, name, duration));
 
         return course;
     }

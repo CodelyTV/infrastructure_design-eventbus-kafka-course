@@ -23,7 +23,7 @@ final class CourseCreatorShould extends CoursesModuleUnitTestCase {
         Course                   course      = CourseMother.random();
         CourseCreatedDomainEvent domainEvent = CourseCreatedDomainEventMother.fromCourse(course);
 
-        creator.create(course.id(), course.name(), course.duration());
+        creator.create(course.id().value(), course.name().value(), course.duration().value());
 
         shouldHaveSaved(course);
         shouldHavePublished(domainEvent);

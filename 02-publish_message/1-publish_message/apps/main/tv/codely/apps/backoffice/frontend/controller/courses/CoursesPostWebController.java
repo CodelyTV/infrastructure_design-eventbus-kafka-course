@@ -11,9 +11,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
 import tv.codely.mooc.courses.application.create.CourseCreator;
-import tv.codely.mooc.courses.domain.CourseDuration;
-import tv.codely.mooc.courses.domain.CourseId;
-import tv.codely.mooc.courses.domain.CourseName;
 import tv.codely.shared.infrastructure.validation.ValidationResponse;
 import tv.codely.shared.infrastructure.validation.Validator;
 
@@ -55,11 +52,7 @@ public final class CoursesPostWebController {
 	}
 
 	private RedirectView createCourse(HashMap<String, Serializable> request) {
-		creator.create(
-			new CourseId(request.get("id").toString()),
-			new CourseName(request.get("name").toString()),
-			new CourseDuration(request.get("duration").toString())
-		);
+		creator.create(request.get("id").toString(), request.get("name").toString(), request.get("duration").toString());
 
 		return new RedirectView("/courses");
 	}

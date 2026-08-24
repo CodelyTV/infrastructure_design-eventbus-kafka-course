@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import tv.codely.mooc.courses.application.create.CourseCreator;
-import tv.codely.mooc.courses.domain.CourseDuration;
-import tv.codely.mooc.courses.domain.CourseId;
-import tv.codely.mooc.courses.domain.CourseName;
 import tv.codely.shared.domain.DomainError;
 import tv.codely.shared.domain.bus.command.CommandBus;
 import tv.codely.shared.domain.bus.query.QueryBus;
@@ -30,7 +27,7 @@ public final class CoursesPutController extends ApiController {
 
 	@PutMapping(value = "/courses/{id}")
 	public ResponseEntity<String> index(@PathVariable String id, @RequestBody Request request) {
-		creator.create(new CourseId(id), new CourseName(request.name()), new CourseDuration(request.duration()));
+		creator.create(id, request.name(), request.duration());
 
 		return new ResponseEntity<>(HttpStatus.CREATED);
 	}

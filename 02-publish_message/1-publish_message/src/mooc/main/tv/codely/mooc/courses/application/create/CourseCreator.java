@@ -14,7 +14,7 @@ public final class CourseCreator {
         this.eventBus   = eventBus;
     }
 
-    public void create(CourseId id, CourseName name, CourseDuration duration) {
+    public void create(String id, String name, String duration) {
         Course course = Course.create(id, name, duration);
 
         repository.save(course);
