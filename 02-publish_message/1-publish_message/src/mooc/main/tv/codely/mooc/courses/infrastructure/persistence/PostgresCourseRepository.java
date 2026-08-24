@@ -15,8 +15,8 @@ import java.util.Optional;
 
 @Service
 @Transactional("mooc-transaction_manager")
-public class MySqlCourseRepository extends HibernateRepository<Course> implements CourseRepository {
-    public MySqlCourseRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
+public class PostgresCourseRepository extends HibernateRepository<Course> implements CourseRepository {
+    public PostgresCourseRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
         super(sessionFactory, Course.class);
     }
 

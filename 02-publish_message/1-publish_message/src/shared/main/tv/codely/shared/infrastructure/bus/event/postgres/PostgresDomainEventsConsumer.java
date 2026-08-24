@@ -1,4 +1,4 @@
-package tv.codely.shared.infrastructure.bus.event.mysql;
+package tv.codely.shared.infrastructure.bus.event.postgres;
 
 import jakarta.transaction.Transactional;
 import org.hibernate.SessionFactory;
@@ -16,14 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class MySqlDomainEventsConsumer {
+public class PostgresDomainEventsConsumer {
 	private final SessionFactory sessionFactory;
 	private final DomainEventsInformation domainEventsInformation;
 	private final EventBus bus;
 	private final Integer CHUNKS = 200;
 	private Boolean shouldStop = false;
 
-	public MySqlDomainEventsConsumer(
+	public PostgresDomainEventsConsumer(
 		@Qualifier("mooc-session_factory") SessionFactory sessionFactory,
 		DomainEventsInformation domainEventsInformation,
 		EventBus bus

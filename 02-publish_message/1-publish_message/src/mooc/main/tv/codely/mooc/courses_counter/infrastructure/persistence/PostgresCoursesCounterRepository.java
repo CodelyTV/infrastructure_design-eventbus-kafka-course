@@ -13,8 +13,8 @@ import java.util.Optional;
 
 @Service
 @Transactional("mooc-transaction_manager")
-public class MySqlCoursesCounterRepository extends HibernateRepository<CoursesCounter> implements CoursesCounterRepository {
-    public MySqlCoursesCounterRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
+public class PostgresCoursesCounterRepository extends HibernateRepository<CoursesCounter> implements CoursesCounterRepository {
+    public PostgresCoursesCounterRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
         super(sessionFactory, CoursesCounter.class);
     }
 

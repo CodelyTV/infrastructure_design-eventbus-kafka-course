@@ -13,8 +13,8 @@ import java.util.List;
 
 @Service
 @Transactional("backoffice-transaction_manager")
-public class MySqlBackofficeCourseRepository extends HibernateRepository<BackofficeCourse> implements BackofficeCourseRepository {
-    public MySqlBackofficeCourseRepository(@Qualifier("backoffice-session_factory") SessionFactory sessionFactory) {
+public class PostgresBackofficeCourseRepository extends HibernateRepository<BackofficeCourse> implements BackofficeCourseRepository {
+    public PostgresBackofficeCourseRepository(@Qualifier("backoffice-session_factory") SessionFactory sessionFactory) {
         super(sessionFactory, BackofficeCourse.class);
     }
 

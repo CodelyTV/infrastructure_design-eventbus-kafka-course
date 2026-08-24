@@ -5,8 +5,8 @@ import org.hibernate.cfg.AvailableSettings;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
-import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.orm.jpa.hibernate.HibernateTransactionManager;
+import org.springframework.orm.jpa.hibernate.LocalSessionFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import tv.codely.shared.domain.Service;
 
@@ -52,10 +52,10 @@ public final class HibernateConfigurationFactory {
         String password
     ) throws IOException {
         BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setDriverClassName("org.postgresql.Driver");
         dataSource.setUrl(
             String.format(
-                "jdbc:mysql://%s:%s/%s?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+                "jdbc:postgresql://%s:%s/%s",
                 host,
                 port,
                 databaseName
@@ -64,20 +64,20 @@ public final class HibernateConfigurationFactory {
         dataSource.setUsername(username);
         dataSource.setPassword(password);
 
-        Resource mysqlResource = resourceResolver.getResource(String.format(
+        Resource postgresResource = resourceResolver.getResource(String.format(
             "classpath:database/%s.sql",
             databaseName
         ));
-        String mysqlSentences = new Scanner(mysqlResource.getInputStream(), StandardCharsets.UTF_8).useDelimiter("\\A").next();
+        String postgresSentences = new Scanner(postgresResource.getInputStream(), StandardCharsets.UTF_8).useDelimiter("\\A").next();
 
-        dataSource.setConnectionInitSqls(new ArrayList<>(Arrays.asList(mysqlSentences.split(";"))));
+        dataSource.setConnectionInitSqls(new ArrayList<>(Arrays.asList(postgresSentences.split(";"))));
 
         return dataSource;
     }
 
     private List<Resource> searchMappingFiles(String contextName) {
         List<String> modules   = subdirectoriesFor(contextName);
-        List<String> goodPaths = new ArrayList<>();
+        List<String> goodPaths = new ArrayList<>(sharedMappingFiles());
 
         for (String module : modules) {
             String[] files = mappingFilesIn(module + "/infrastructure/persistence/hibernate/");
@@ -88,6 +88,18 @@ public final class HibernateConfigurationFactory {
         }
 
         return goodPaths.stream().map(FileSystemResource::new).collect(Collectors.toList());
+    }
+
+    private List<String> sharedMappingFiles() {
+        String path = "./src/shared/main/tv/codely/shared/infrastructure/persistence/hibernate/";
+
+        if (!new File(path).isDirectory()) {
+            path = "../shared/main/tv/codely/shared/infrastructure/persistence/hibernate/";
+        }
+
+        String finalPath = path;
+
+        return Arrays.stream(mappingFilesIn(path)).map(file -> finalPath + file).collect(Collectors.toList());
     }
 
     private List<String> subdirectoriesFor(String contextName) {
@@ -112,12 +124,8 @@ public final class HibernateConfigurationFactory {
     private String[] mappingFilesIn(String path) {
 		List<String> fileList = new ArrayList<>();
 
-		String[] hbmFiles = new File(path).list((current, name) -> new File(current, name).getName().contains(".hbm.xml"));
-        String[] ormFiles = new File(path).list((current, name) -> new File(current, name).getName().contains(".orm.xml"));
+		String[] ormFiles = new File(path).list((current, name) -> new File(current, name).getName().contains(".orm.xml"));
 
-		if (hbmFiles != null) {
-			fileList.addAll(Arrays.asList(hbmFiles));
-		}
 		if (ormFiles != null) {
 			fileList.addAll(Arrays.asList(ormFiles));
 		}
@@ -129,8 +137,7 @@ public final class HibernateConfigurationFactory {
         Properties hibernateProperties = new Properties();
         hibernateProperties.put(AvailableSettings.HBM2DDL_AUTO, "none");
         hibernateProperties.put(AvailableSettings.SHOW_SQL, "false");
-        hibernateProperties.put(AvailableSettings.DIALECT, "org.hibernate.dialect.MySQLDialect");
-        hibernateProperties.put(AvailableSettings.TRANSFORM_HBM_XML, true);
+        hibernateProperties.put(AvailableSettings.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
 
         return hibernateProperties;
     }

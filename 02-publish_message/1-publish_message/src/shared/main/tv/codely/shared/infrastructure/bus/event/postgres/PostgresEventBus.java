@@ -1,4 +1,4 @@
-package tv.codely.shared.infrastructure.bus.event.mysql;
+package tv.codely.shared.infrastructure.bus.event.postgres;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.query.NativeQuery;
@@ -10,10 +10,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
-public final class MySqlEventBus implements EventBus {
+public final class PostgresEventBus implements EventBus {
     private final SessionFactory sessionFactory;
 
-    public MySqlEventBus(SessionFactory sessionFactory) {
+    public PostgresEventBus(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
@@ -31,7 +31,7 @@ public final class MySqlEventBus implements EventBus {
 
         NativeQuery query = sessionFactory.getCurrentSession().createNativeQuery(
             "INSERT INTO domain_events (id,  aggregate_id, name,  body,  occurred_on) " +
-            "VALUES (:id, :aggregateId, :name, :body, :occurredOn);"
+            "VALUES (:id, :aggregateId, :name, :body, CAST(:occurredOn AS TIMESTAMP));"
         );
 
         query.setParameter("id", id)

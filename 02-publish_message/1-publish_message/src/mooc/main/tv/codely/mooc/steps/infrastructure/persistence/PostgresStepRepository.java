@@ -13,8 +13,8 @@ import java.util.Optional;
 
 @Service
 @Transactional("mooc-transaction_manager")
-public class MySqlStepRepository extends HibernateRepository<Step> implements StepRepository {
-    public MySqlStepRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
+public class PostgresStepRepository extends HibernateRepository<Step> implements StepRepository {
+    public PostgresStepRepository(@Qualifier("mooc-session_factory") SessionFactory sessionFactory) {
         super(sessionFactory, Step.class);
     }
 

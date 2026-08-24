@@ -1,7 +1,7 @@
 all: build
 
 start:
-	@docker compose -f docker-compose.ci.yml up -d
+	@docker compose up -d
 
 build:
 	@./gradlew build --warning-mode all
@@ -18,8 +18,8 @@ test:
 run:
 	@./gradlew :run
 
-ping-mysql:
-	@docker exec codely-java_ddd_example-mysql mysqladmin --user=root --password= --host "127.0.0.1" ping --silent
+ping-postgres:
+	@docker exec codely-java_ddd_example-postgres pg_isready --username=root --host=127.0.0.1
 
 # Start the app
 start-mooc_backend:

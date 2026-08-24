@@ -13,25 +13,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Transactional
-class MySqlCourseRepositoryShould extends CoursesModuleInfrastructureTestCase {
+class PostgresCourseRepositoryShould extends CoursesModuleInfrastructureTestCase {
     @Test
     void save_a_course() {
         Course course = CourseMother.random();
 
-        mySqlCourseRepository.save(course);
+        postgresCourseRepository.save(course);
     }
 
     @Test
     void return_an_existing_course() {
         Course course = CourseMother.random();
 
-        mySqlCourseRepository.save(course);
+        postgresCourseRepository.save(course);
 
-        assertEquals(Optional.of(course), mySqlCourseRepository.search(course.id()));
+        assertEquals(Optional.of(course), postgresCourseRepository.search(course.id()));
     }
 
     @Test
     void not_return_a_non_existing_course() {
-        assertFalse(mySqlCourseRepository.search(CourseIdMother.random()).isPresent());
+        assertFalse(postgresCourseRepository.search(CourseIdMother.random()).isPresent());
     }
 }

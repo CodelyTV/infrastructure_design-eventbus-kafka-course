@@ -17,9 +17,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 @Transactional
-class MySqlBackofficeCourseRepositoryShould extends BackofficeContextInfrastructureTestCase {
+class PostgresBackofficeCourseRepositoryShould extends BackofficeContextInfrastructureTestCase {
     @Autowired
-    @Qualifier("mySqlBackofficeCourseRepository")
+    @Qualifier("postgresBackofficeCourseRepository")
     private BackofficeCourseRepository repository;
 
     @Test

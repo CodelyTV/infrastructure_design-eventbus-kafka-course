@@ -8,5 +8,5 @@ import tv.codely.mooc.courses.infrastructure.persistence.InMemoryCourseRepositor
 public abstract class CoursesModuleInfrastructureTestCase extends MoocContextInfrastructureTestCase {
     protected InMemoryCourseRepository inMemoryCourseRepository = new InMemoryCourseRepository();
     @Autowired
-    protected CourseRepository         mySqlCourseRepository;
+    protected CourseRepository         postgresCourseRepository;
 }
