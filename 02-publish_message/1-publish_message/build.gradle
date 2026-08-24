@@ -132,6 +132,10 @@ subprojects {
             implementation project(":shared")
             testImplementation project(path: ":shared", configuration: "testArtifacts")
         }
+
+        if (project.name == "backoffice") {
+            testImplementation project(":mooc")
+        }
     }
 
     bootJar {

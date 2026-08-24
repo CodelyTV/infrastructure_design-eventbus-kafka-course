@@ -10,16 +10,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-import tv.codely.mooc.courses.application.create.CreateCourseCommand;
-import tv.codely.shared.domain.bus.command.CommandBus;
-import tv.codely.shared.domain.bus.command.CommandHandlerExecutionError;
+import tv.codely.mooc.courses.application.create.CourseCreator;
+import tv.codely.mooc.courses.domain.CourseDuration;
+import tv.codely.mooc.courses.domain.CourseId;
+import tv.codely.mooc.courses.domain.CourseName;
 import tv.codely.shared.infrastructure.validation.ValidationResponse;
 import tv.codely.shared.infrastructure.validation.Validator;
 
 @Controller
 public final class CoursesPostWebController {
 
-	private final CommandBus bus;
+	private final CourseCreator creator;
 	private final HashMap<String, String> rules = new HashMap<String, String>() {
 		{
 			put("id", "required|not_empty|uuid");
@@ -28,8 +29,8 @@ public final class CoursesPostWebController {
 		}
 	};
 
-	public CoursesPostWebController(CommandBus bus) {
-		this.bus = bus;
+	public CoursesPostWebController(CourseCreator creator) {
+		this.creator = creator;
 	}
 
 	@PostMapping(value = "/courses", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -53,13 +54,11 @@ public final class CoursesPostWebController {
 		return new RedirectView("/courses");
 	}
 
-	private RedirectView createCourse(HashMap<String, Serializable> request) throws CommandHandlerExecutionError {
-		bus.dispatch(
-			new CreateCourseCommand(
-				request.get("id").toString(),
-				request.get("name").toString(),
-				request.get("duration").toString()
-			)
+	private RedirectView createCourse(HashMap<String, Serializable> request) {
+		creator.create(
+			new CourseId(request.get("id").toString()),
+			new CourseName(request.get("name").toString()),
+			new CourseDuration(request.get("duration").toString())
 		);
 
 		return new RedirectView("/courses");

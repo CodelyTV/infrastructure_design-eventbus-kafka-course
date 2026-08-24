@@ -3,6 +3,7 @@ package tv.codely.backoffice.courses.infrastructure.persistence;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Transactional;
 import tv.codely.backoffice.BackofficeContextInfrastructureTestCase;
 import tv.codely.backoffice.courses.domain.BackofficeCourse;
 import tv.codely.backoffice.courses.domain.BackofficeCourseCriteriaMother;
@@ -10,13 +11,12 @@ import tv.codely.backoffice.courses.domain.BackofficeCourseMother;
 import tv.codely.backoffice.courses.domain.BackofficeCourseRepository;
 import tv.codely.shared.domain.criteria.Criteria;
 
-import jakarta.transaction.Transactional;
 import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
-@Transactional
+@Transactional("backoffice-transaction_manager")
 class PostgresBackofficeCourseRepositoryShould extends BackofficeContextInfrastructureTestCase {
     @Autowired
     @Qualifier("postgresBackofficeCourseRepository")
