@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import tv.codely.shared.infrastructure.bus.event.failover.DomainEventFailover;
 import tv.codely.shared.infrastructure.config.Parameter;
 import tv.codely.shared.infrastructure.config.ParameterNotExist;
 
@@ -16,10 +17,12 @@ import java.util.Map;
 
 @Configuration
 public class KafkaEventBusConfiguration {
-    private final Parameter config;
+    private final Parameter           config;
+    private final DomainEventFailover failover;
 
-    public KafkaEventBusConfiguration(Parameter config) {
-        this.config = config;
+    public KafkaEventBusConfiguration(Parameter config, DomainEventFailover failover) {
+        this.config   = config;
+        this.failover = failover;
     }
 
     @Bean
@@ -29,6 +32,7 @@ public class KafkaEventBusConfiguration {
         settings.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.get("KAFKA_BOOTSTRAP_SERVERS"));
         settings.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         settings.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        settings.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, config.getInt("KAFKA_MAX_BLOCK_MS"));
 
         return new DefaultKafkaProducerFactory<>(settings);
     }
@@ -41,6 +45,6 @@ public class KafkaEventBusConfiguration {
     @Primary
     @Bean
     public KafkaEventBus kafkaEventBus() throws ParameterNotExist {
-        return new KafkaEventBus(domainEventsKafkaTemplate(), config.get("KAFKA_DOMAIN_EVENTS_TOPIC"));
+        return new KafkaEventBus(domainEventsKafkaTemplate(), config.get("KAFKA_DOMAIN_EVENTS_TOPIC"), failover);
     }
 }
