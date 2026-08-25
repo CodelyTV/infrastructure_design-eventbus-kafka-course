@@ -1,0 +1,180 @@
+// Main project (located in apps/)
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:4.1.1')
+        classpath('io.spring.gradle:dependency-management-plugin:1.1.7')
+    }
+}
+
+plugins {
+    id "com.diffplug.spotless" version "8.10.0"
+}
+
+spotless {
+    java {
+        prettier(['prettier': '2.8.8', 'prettier-plugin-java': '2.2.0'])
+                .config(['parser': 'java', 'useTabs': true, 'printWidth': 120])
+
+        importOrder('\\#', 'java', '', 'tv.codely')
+        removeUnusedImports()
+
+        endWithNewline()
+
+        formatAnnotations()
+    }
+}
+
+// Common for all projects
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'org.springframework.boot'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        // Prod
+        implementation 'org.apache.logging.log4j:log4j-core:2.26.1'
+        implementation 'org.apache.logging.log4j:log4j-api:2.26.1'
+        implementation 'org.apache.logging.log4j:log4j-layout-template-json:2.26.1'
+        implementation 'io.github.cdimascio:dotenv-java:3.2.0'
+        implementation 'org.hibernate.orm:hibernate-core:7.4.6.Final'
+        implementation 'jakarta.persistence:jakarta.persistence-api:3.2.0'
+        implementation 'org.springframework:spring-orm:7.0.9'
+        implementation 'org.springframework:spring-context-support:7.0.9'
+        implementation 'org.apache.tomcat:tomcat-dbcp:11.0.25'
+        implementation 'com.sun.xml.bind:jaxb-impl:4.0.9'
+        implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.5'
+        implementation 'org.freemarker:freemarker-gae:2.3.34'
+        implementation 'org.reflections:reflections:0.10.2'
+        implementation 'com.google.guava:guava:33.7.1-jre'
+        implementation 'com.fasterxml.jackson.core:jackson-databind'
+        implementation 'org.postgresql:postgresql:42.7.13'
+        implementation 'org.springframework.kafka:spring-kafka'
+
+        // Test
+        testImplementation 'org.junit.jupiter:junit-jupiter-api'
+        testImplementation 'org.junit.jupiter:junit-jupiter-engine'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'net.datafaker:datafaker:2.7.0'
+    }
+
+    test {
+        useJUnitPlatform()
+
+        failOnNoDiscoveredTests = false
+
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+
+    tasks.register('view_paths') {
+        doLast {
+            println "$project.name"
+            println "------------------"
+            println "Main: $sourceSets.main.java.srcDirTrees"
+            println "   Resources: $sourceSets.main.resources.srcDirTrees"
+            println "Tests: $sourceSets.test.java.srcDirTrees"
+            println "   Resources: $sourceSets.test.resources.srcDirTrees"
+        }
+    }
+}
+
+// All subprojects (located in src/*)
+subprojects {
+    group = "tv.codely.${rootProject.name}"
+
+    sourceSets {
+        main {
+            java { srcDirs = ['main'] }
+            resources { srcDirs = ['main/resources'] }
+        }
+
+        test {
+            java { srcDirs = ['test'] }
+            resources { srcDirs = ['test/resources'] }
+        }
+    }
+
+    configurations {
+        testArtifacts
+    }
+
+    tasks.register('testJar', Jar) {
+        archiveClassifier.set('tests')
+        from sourceSets.test.output
+    }
+
+    artifacts {
+        testArtifacts testJar
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+
+        testImplementation rootProject.sourceSets.main.output
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+        if (project.name != "shared") {
+            implementation project(":shared")
+            testImplementation project(path: ":shared", configuration: "testArtifacts")
+        }
+
+        if (project.name == "backoffice") {
+            testImplementation project(":mooc")
+        }
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
+
+sourceSets {
+    main {
+        java { srcDirs = ['apps/main'] }
+        resources { srcDirs = ['apps/main/resources'] }
+    }
+
+    test {
+        java { srcDirs = ['apps/test'] }
+        resources { srcDirs = ['apps/test/resources'] }
+    }
+}
+
+bootJar {
+    archiveBaseName.set('java-ddd-example')
+    archiveVersion.set('0.0.1')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation project(":shared")
+    implementation project(":backoffice")
+    implementation project(":mooc")
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation project(path: ":shared", configuration: "testArtifacts")
+}
