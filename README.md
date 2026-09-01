@@ -9,7 +9,7 @@
 </p>
 
 <h1 align="center">
-    {COURSE_EMOJI} {COURSE_NAME_IN_ENGLISH}
+    🚏 Event bus in Kafka
 </h1>
 
 <p align="center">
@@ -18,10 +18,10 @@
 </p>
 
 <p align="center">
-    {COURSE_SUMMARY_IN_ENGLISH}
+    Publish and consume your domain events with Kafka to scale your event-driven architecture.
 </p>
 
 <p align="center">
-  <a href="https://github.com/CodelyTV/{REPOSITORY_NAME}/stargazers">Stars are welcome 😊</a><br><br>
-  Course (Spanish): <a href="{COURSE_URL}">{COURSE_NAME_IN_SPANISH}</a>
+  <a href="https://github.com/CodelyTV/infrastructure_design-eventbus-kafka-course/stargazers">Stars are welcome 😊</a><br><br>
+  Course (Spanish): <a href="https://codely.com/cursos/event-bus-en-kafka-3k4f">Event bus en Kafka</a>
 </p>
