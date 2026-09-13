@@ -6,6 +6,7 @@ import tv.codely.shared.domain.bus.event.DomainEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +28,10 @@ public final class DomainEventsInformation {
 
     public Class<? extends DomainEvent> forName(String name) {
         return indexedDomainEvents.get(name);
+    }
+
+    public List<String> eventNames() {
+        return indexedDomainEvents.keySet().stream().sorted().toList();
     }
 
     public String forClass(Class<? extends DomainEvent> domainEventClass) {

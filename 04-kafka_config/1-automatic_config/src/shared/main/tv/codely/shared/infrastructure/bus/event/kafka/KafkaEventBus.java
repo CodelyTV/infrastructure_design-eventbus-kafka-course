@@ -15,12 +15,10 @@ public final class KafkaEventBus implements EventBus {
     private static final int FAILOVER_CHUNK             = 10;
 
     private final KafkaTemplate<String, String> template;
-    private final String                        topic;
     private final DomainEventFailover           failover;
 
-    public KafkaEventBus(KafkaTemplate<String, String> template, String topic, DomainEventFailover failover) {
+    public KafkaEventBus(KafkaTemplate<String, String> template, DomainEventFailover failover) {
         this.template = template;
-        this.topic    = topic;
         this.failover = failover;
     }
 
@@ -41,7 +39,7 @@ public final class KafkaEventBus implements EventBus {
 
     private void publish(String eventId, String eventName, String body) {
         try {
-            template.send(topic, eventId, body).get(PUBLISH_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
+            template.send(eventName, eventId, body).get(PUBLISH_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
         } catch (Exception error) {
             failover.publish(eventId, eventName, body);
         }

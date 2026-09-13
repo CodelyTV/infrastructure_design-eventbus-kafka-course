@@ -34,7 +34,7 @@ public final class NewCoursesNewsletterEmailSent extends DomainEvent {
 
     @Override
     public String eventName() {
-        return "new_courses_newsletter_email.sent";
+        return "codely.mooc.new-courses-newsletter-email.sent";
     }
 
     @Override

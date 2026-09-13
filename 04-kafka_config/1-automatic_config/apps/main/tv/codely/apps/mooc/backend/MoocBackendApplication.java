@@ -7,6 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
 import tv.codely.apps.mooc.backend.command.ConsumePostgresDomainEventsCommand;
+import tv.codely.apps.mooc.backend.command.GenerateKafkaTopicsTerraformCommand;
 import tv.codely.shared.domain.Service;
 
 @SpringBootApplication
@@ -20,6 +21,7 @@ public class MoocBackendApplication {
 		return new HashMap<String, Class<?>>() {
 			{
 				put("domain-events:postgres:consume", ConsumePostgresDomainEventsCommand.class);
+				put("domain-events:kafka:terraform:generate", GenerateKafkaTopicsTerraformCommand.class);
 			}
 		};
 	}

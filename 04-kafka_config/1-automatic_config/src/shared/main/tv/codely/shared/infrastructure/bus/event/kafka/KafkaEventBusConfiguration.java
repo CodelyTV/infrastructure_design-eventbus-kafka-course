@@ -45,6 +45,6 @@ public class KafkaEventBusConfiguration {
     @Primary
     @Bean
     public KafkaEventBus kafkaEventBus() throws ParameterNotExist {
-        return new KafkaEventBus(domainEventsKafkaTemplate(), config.get("KAFKA_DOMAIN_EVENTS_TOPIC"), failover);
+        return new KafkaEventBus(domainEventsKafkaTemplate(), failover);
     }
 }

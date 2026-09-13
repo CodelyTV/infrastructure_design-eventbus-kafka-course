@@ -39,7 +39,7 @@ public final class CourseCreatedDomainEvent extends DomainEvent {
 
     @Override
     public String eventName() {
-        return "course.created";
+        return "codely.mooc.course.created";
     }
 
     @Override

@@ -1,6 +1,7 @@
 package tv.codely.apps.mooc.backend.config;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import tv.codely.shared.infrastructure.spring.ApiExceptionMiddleware;
 
 @Configuration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class MoocBackendServerConfiguration {
 
 	private final ObjectProvider<RequestMappingHandlerMapping> mapping;

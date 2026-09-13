@@ -1,1 +1,1 @@
- docker start codely-java_ddd_example-kafka
+docker compose start shared_kafka

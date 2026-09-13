@@ -7,23 +7,26 @@ build:
 	@./gradlew build --warning-mode all
 
 lint:
-	@docker exec codely-java_ddd_example-test_server ./gradlew spotlessCheck
+	@docker compose exec test_server_java ./gradlew spotlessCheck
 
 run-tests:
 	@./gradlew test --warning-mode all
 
 test:
-	@docker exec codely-java_ddd_example-test_server ./gradlew test --warning-mode all
+	@docker compose exec test_server_java ./gradlew test --warning-mode all
 
 run:
 	@./gradlew :run
 
 ping-postgres:
-	@docker exec codely-java_ddd_example-postgres pg_isready --username=root --host=127.0.0.1
+	@docker compose exec shared_postgres pg_isready --username=root --host=127.0.0.1
 
 # Start the app
 start-mooc_backend:
-	@./gradlew bootRun --args='mooc_backend server'
+	@./gradlew :bootRun --args='mooc_backend server'
 
 start-backoffice_frontend:
-	@./gradlew bootRun --args='backoffice_frontend server'
+	@./gradlew :bootRun --args='backoffice_frontend server'
+
+generate-kafka-terraform:
+	@docker compose exec test_server_java ./gradlew :bootRun --args='mooc_backend domain-events:kafka:terraform:generate'
