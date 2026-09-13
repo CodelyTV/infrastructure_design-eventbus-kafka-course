@@ -10,11 +10,11 @@ public record DomainEventShareGroup(String name, Class<?> subscriberClass, List<
             "codely.%s.%s.%s",
             subscriber.contextName(),
             subscriber.moduleName(),
-            toSnakeCase(subscriber.className())
+            toKebabCase(subscriber.className())
         );
     }
 
-    private static String toSnakeCase(String text) {
-        return text.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
+    private static String toKebabCase(String text) {
+        return text.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase();
     }
 }

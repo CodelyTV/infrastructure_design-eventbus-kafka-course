@@ -24,14 +24,14 @@ final class DomainEventShareGroupsShould {
 	void create_one_share_group_per_subscriber_named_after_it() {
 		List<String> names = shareGroups.all().stream().map(DomainEventShareGroup::name).toList();
 
-		assertTrue(names.contains("codely.backoffice.courses.create_backoffice_course_on_course_created"));
-		assertTrue(names.contains("codely.mooc.courses_counter.increment_courses_counter_on_course_created"));
+		assertTrue(names.contains("codely.backoffice.courses.create-backoffice-course-on-course-created"));
+		assertTrue(names.contains("codely.mooc.courses_counter.increment-courses-counter-on-course-created"));
 	}
 
 	@Test
 	void subscribe_each_share_group_to_the_topics_of_its_events() {
 		DomainEventShareGroup shareGroup = shareGroupNamed(
-			"codely.mooc.courses_counter.increment_courses_counter_on_course_created"
+			"codely.mooc.courses_counter.increment-courses-counter-on-course-created"
 		);
 
 		assertEquals(List.of("codely.mooc.course.created"), shareGroup.topics());
