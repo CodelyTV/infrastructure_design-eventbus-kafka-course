@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Helpers to publish domain events with the Kafka console producer.
 
 uuid() {
   uuidgen | tr '[:upper:]' '[:lower:]'

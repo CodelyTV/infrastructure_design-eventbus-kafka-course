@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Publishes valid domain events. Every subscriber consumes and acknowledges them.
 
 source "$(dirname "$0")/lib/publish.sh"
 
