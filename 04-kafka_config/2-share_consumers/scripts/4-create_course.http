@@ -1,0 +1,7 @@
+ PUT http://localhost:8030/courses/{{$uuid}}
+Content-Type: application/json
+
+{
+  "name": "Event Bus con Kafka",
+  "duration": "3 hours"
+}
