@@ -17,10 +17,10 @@ public final class ConsumeKafkaDomainEventsCommand extends ConsoleCommand {
 
 	@Override
 	public void execute(String[] args) {
-		List<DomainEventShareGroup> started = consumers.start(this::logConsumed);
+		List<DomainEventShareGroup> startedConsumers = consumers.start(this::logConsumed);
 
-		log(String.format("Started %d share consumers, one per subscriber:", started.size()));
-		started.forEach(this::logStarted);
+		log(String.format("Started %d share consumers, one per subscriber:", startedConsumers.size()));
+		startedConsumers.forEach(this::logStarted);
 
 		Runtime.getRuntime().addShutdownHook(new Thread(consumers::stop));
 

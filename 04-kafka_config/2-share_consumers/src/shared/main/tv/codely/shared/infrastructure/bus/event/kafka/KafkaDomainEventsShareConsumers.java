@@ -14,35 +14,35 @@ import java.util.function.BiConsumer;
 
 @Service
 public final class KafkaDomainEventsShareConsumers {
-    private final DomainEventShareGroups                                   shareGroups;
+    private final DomainEventShareGroups allShareGroups;
     private final ShareConsumerFactory<String, String>                     consumerFactory;
     private final DomainEventJsonDeserializer                              deserializer;
     private final ApplicationContext                                       context;
     private final List<ShareKafkaMessageListenerContainer<String, String>> containers = new ArrayList<>();
 
     public KafkaDomainEventsShareConsumers(
-        DomainEventShareGroups shareGroups,
+        DomainEventShareGroups allShareGroups,
         ShareConsumerFactory<String, String> consumerFactory,
         DomainEventJsonDeserializer deserializer,
         ApplicationContext context
     ) {
-        this.shareGroups     = shareGroups;
+        this.allShareGroups  = allShareGroups;
         this.consumerFactory = consumerFactory;
         this.deserializer    = deserializer;
         this.context         = context;
     }
 
     public List<DomainEventShareGroup> start(BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed) {
-        List<DomainEventShareGroup> started = shareGroups.all().stream().filter(this::hasSubscriberBean).toList();
+        List<DomainEventShareGroup> shareGroups = allShareGroups.all().stream().filter(this::hasSubscriberBean).toList();
 
-        started.forEach(shareGroup -> {
+        shareGroups.forEach(shareGroup -> {
             ShareKafkaMessageListenerContainer<String, String> container = containerFor(shareGroup, onConsumed);
 
             container.start();
             containers.add(container);
         });
 
-        return started;
+        return shareGroups;
     }
 
     public void stop() {
@@ -60,8 +60,7 @@ public final class KafkaDomainEventsShareConsumers {
         ContainerProperties properties = new ContainerProperties(shareGroup.topics().toArray(String[]::new));
 
         properties.setGroupId(shareGroup.name());
-        properties.setShareAckMode(ContainerProperties.ShareAckMode.EXPLICIT);
-        properties.setExplicitShareAcknowledgment(true);
+        properties.setShareAckMode(ContainerProperties.ShareAckMode.MANUAL);
         properties.setMessageListener(
             new KafkaDomainEventShareConsumer(
                 shareGroup,
