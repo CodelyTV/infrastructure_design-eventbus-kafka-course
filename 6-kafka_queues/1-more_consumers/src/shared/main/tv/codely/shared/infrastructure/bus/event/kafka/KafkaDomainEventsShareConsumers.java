@@ -6,6 +6,8 @@ import org.springframework.kafka.listener.ShareKafkaMessageListenerContainer;
 import tv.codely.shared.domain.Service;
 import tv.codely.shared.domain.bus.event.DomainEvent;
 import tv.codely.shared.infrastructure.bus.event.DomainEventJsonDeserializer;
+import tv.codely.shared.infrastructure.config.Parameter;
+import tv.codely.shared.infrastructure.config.ParameterNotExist;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,7 @@ public final class KafkaDomainEventsShareConsumers {
     private final ShareConsumerFactory<String, String>                     consumerFactory;
     private final DomainEventJsonDeserializer                              deserializer;
     private final DomainEventSubscriberInvoker                             invoker;
+    private final int                                                      consumersPerShareGroup;
     private final List<ShareKafkaMessageListenerContainer<String, String>> containers = new ArrayList<>();
 
     public KafkaDomainEventsShareConsumers(
@@ -25,13 +28,15 @@ public final class KafkaDomainEventsShareConsumers {
         KafkaShareGroupsDeadLetterConfigurer deadLetterConfigurer,
         ShareConsumerFactory<String, String> consumerFactory,
         DomainEventJsonDeserializer deserializer,
-        DomainEventSubscriberInvoker invoker
-    ) {
+        DomainEventSubscriberInvoker invoker,
+        Parameter config
+    ) throws ParameterNotExist {
         this.allShareGroups       = allShareGroups;
         this.deadLetterConfigurer = deadLetterConfigurer;
         this.consumerFactory      = consumerFactory;
         this.deserializer         = deserializer;
         this.invoker              = invoker;
+        this.consumersPerShareGroup = config.getInt("KAFKA_CONSUMERS_PER_SHARE_GROUP");
     }
 
     public List<DomainEventShareGroup> start(BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed) {
@@ -80,6 +85,7 @@ public final class KafkaDomainEventsShareConsumers {
         );
 
         container.setBeanName(shareGroup.name());
+        container.setConcurrency(consumersPerShareGroup);
 
         return container;
     }
