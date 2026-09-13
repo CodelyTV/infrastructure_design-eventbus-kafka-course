@@ -25,13 +25,13 @@ public final class DeadLetterReplayer {
 
     public DeadLetterResolution replay(DeadLetterMessage message) {
         if (message.wasRejectedByClient()) {
-            return DeadLetterResolution.parked(message, "the body is not a valid domain event, review it by hand");
+            return DeadLetterResolution.needsReview(message, "the body is not a valid domain event, review it by hand");
         }
 
         Optional<DomainEventShareGroup> shareGroup = shareGroupNamed(message.failedShareGroup());
 
         if (shareGroup.isEmpty()) {
-            return DeadLetterResolution.parked(message, "no subscriber in this application for the failed share group");
+            return DeadLetterResolution.needsReview(message, "no subscriber in this application for the failed share group");
         }
 
         DomainEvent event;
@@ -39,7 +39,7 @@ public final class DeadLetterReplayer {
         try {
             event = deserializer.deserialize(message.body());
         } catch (Exception error) {
-            return DeadLetterResolution.parked(message, "the copied record can not be deserialized: " + error.getMessage());
+            return DeadLetterResolution.needsReview(message, "the copied record can not be deserialized: " + error.getMessage());
         }
 
         try {

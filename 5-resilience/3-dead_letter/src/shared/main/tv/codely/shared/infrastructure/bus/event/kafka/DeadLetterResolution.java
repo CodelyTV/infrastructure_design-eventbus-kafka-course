@@ -4,7 +4,7 @@ public record DeadLetterResolution(DeadLetterMessage message, Action action, Str
     public enum Action {
         REPLAYED,
         RELEASED,
-        PARKED
+        NEEDS_REVIEW
     }
 
     public static DeadLetterResolution replayed(DeadLetterMessage message) {
@@ -15,7 +15,7 @@ public record DeadLetterResolution(DeadLetterMessage message, Action action, Str
         return new DeadLetterResolution(message, Action.RELEASED, "the subscriber failed again: " + error.getMessage());
     }
 
-    public static DeadLetterResolution parked(DeadLetterMessage message, String reason) {
-        return new DeadLetterResolution(message, Action.PARKED, reason);
+    public static DeadLetterResolution needsReview(DeadLetterMessage message, String reason) {
+        return new DeadLetterResolution(message, Action.NEEDS_REVIEW, reason);
     }
 }
