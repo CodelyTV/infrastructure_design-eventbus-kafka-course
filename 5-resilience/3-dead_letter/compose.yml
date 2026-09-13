@@ -15,7 +15,7 @@ services:
       "
 
   shared_kafka:
-    image: confluentinc/cp-kafka:8.3.1
+    image: apache/kafka:4.4.0-rc1
     restart: unless-stopped
     ports:
       - "9092:9092"
