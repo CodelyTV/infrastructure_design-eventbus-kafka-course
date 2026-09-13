@@ -9,10 +9,13 @@ import tv.codely.shared.infrastructure.bus.event.DomainEventJsonDeserializer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 public final class KafkaDomainEventShareConsumer implements AcknowledgingShareConsumerAwareMessageListener<String, String> {
+    private static final Duration BACKOFF_STEP = Duration.ofSeconds(2);
+
     private final DomainEventShareGroup                          shareGroup;
     private final Object                                         subscriber;
     private final Method                                         handler;
@@ -48,12 +51,28 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
             return;
         }
 
+        waitBackoffFor(record);
+
         try {
             handler.invoke(subscriber, event);
             acknowledgment.acknowledge();
             onConsumed.accept(shareGroup, event);
         } catch (InvocationTargetException | IllegalAccessException error) {
             acknowledgment.release();
+        }
+    }
+
+    private void waitBackoffFor(ConsumerRecord<String, String> record) {
+        short deliveryCount = record.deliveryCount().orElse((short) 1);
+
+        if (deliveryCount <= 1) {
+            return;
+        }
+
+        try {
+            Thread.sleep(BACKOFF_STEP.multipliedBy(deliveryCount));
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
         }
     }
 
