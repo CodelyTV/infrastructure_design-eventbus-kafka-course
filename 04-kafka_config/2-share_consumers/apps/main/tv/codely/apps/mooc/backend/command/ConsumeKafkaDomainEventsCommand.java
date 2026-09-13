@@ -45,7 +45,8 @@ public final class ConsumeKafkaDomainEventsCommand extends ConsoleCommand {
 	private void logConsumed(DomainEventShareGroup shareGroup, DomainEvent event) {
 		log(
 			String.format(
-				"<%s> consumed <%s> with id <%s>",
+				"Share group <%s> -> subscriber <%s> consumed <%s> with id <%s>",
+				shareGroup.name(),
 				shareGroup.subscriberClass().getSimpleName(),
 				event.eventName(),
 				event.eventId()
