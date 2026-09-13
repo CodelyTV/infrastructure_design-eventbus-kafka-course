@@ -1,0 +1,32 @@
+package tv.codely.apps.mooc.backend;
+
+import java.util.HashMap;
+
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+
+import tv.codely.apps.mooc.backend.command.ConsumeKafkaDeadLettersCommand;
+import tv.codely.apps.mooc.backend.command.ConsumeKafkaDomainEventsCommand;
+import tv.codely.apps.mooc.backend.command.ConsumePostgresDomainEventsCommand;
+import tv.codely.apps.mooc.backend.command.GenerateKafkaTopicsTerraformCommand;
+import tv.codely.shared.domain.Service;
+
+@SpringBootApplication
+@ComponentScan(
+	includeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = Service.class),
+	value = { "tv.codely.shared", "tv.codely.mooc", "tv.codely.apps.mooc.backend" }
+)
+public class MoocBackendApplication {
+
+	public static HashMap<String, Class<?>> commands() {
+		return new HashMap<String, Class<?>>() {
+			{
+				put("domain-events:postgres:consume", ConsumePostgresDomainEventsCommand.class);
+				put("domain-events:kafka:consume", ConsumeKafkaDomainEventsCommand.class);
+				put("domain-events:kafka:dead-letter:consume", ConsumeKafkaDeadLettersCommand.class);
+				put("domain-events:kafka:terraform:generate", GenerateKafkaTopicsTerraformCommand.class);
+			}
+		};
+	}
+}

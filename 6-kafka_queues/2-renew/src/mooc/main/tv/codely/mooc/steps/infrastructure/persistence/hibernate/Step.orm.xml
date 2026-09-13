@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence/orm https://jakarta.ee/xml/ns/persistence/orm/orm_3_2.xsd"
+                 version="3.2">
+
+    <entity class="tv.codely.mooc.steps.domain.Step" access="FIELD">
+        <table name="steps" />
+        <inheritance strategy="JOINED" />
+
+        <attributes>
+            <embedded-id name="id">
+                <attribute-override name="value">
+                    <column name="id" length="36" />
+                </attribute-override>
+            </embedded-id>
+
+            <embedded name="title">
+                <attribute-override name="value">
+                    <column name="title" />
+                </attribute-override>
+            </embedded>
+        </attributes>
+    </entity>
+
+    <entity class="tv.codely.mooc.steps.domain.challenge.ChallengeStep" access="FIELD">
+        <table name="steps_challenges" />
+        <primary-key-join-column name="id" />
+
+        <attributes>
+            <embedded name="statement">
+                <attribute-override name="value">
+                    <column name="statement" />
+                </attribute-override>
+            </embedded>
+        </attributes>
+    </entity>
+
+    <entity class="tv.codely.mooc.steps.domain.video.VideoStep" access="FIELD">
+        <table name="steps_videos" />
+        <primary-key-join-column name="id" />
+
+        <attributes>
+            <embedded name="videoUrl">
+                <attribute-override name="value">
+                    <column name="url" />
+                </attribute-override>
+            </embedded>
+
+            <embedded name="text">
+                <attribute-override name="value">
+                    <column name="text" />
+                </attribute-override>
+            </embedded>
+        </attributes>
+    </entity>
+
+    <embeddable class="tv.codely.mooc.steps.domain.StepId" access="FIELD" />
+    <embeddable class="tv.codely.mooc.steps.domain.StepTitle" access="FIELD" />
+    <embeddable class="tv.codely.mooc.steps.domain.challenge.ChallengeStepStatement" access="FIELD" />
+    <embeddable class="tv.codely.mooc.steps.domain.video.VideoStepText" access="FIELD" />
+</entity-mappings>
