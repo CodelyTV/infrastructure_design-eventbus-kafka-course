@@ -11,7 +11,7 @@ public record CourseRenamedDomainEvent(
     String eventId,
     String occurredOn,
     String name
-) implements DomainEvent {
+) implements CourseDomainEvent {
 
     public CourseRenamedDomainEvent() {
         this(null, null, null, null);

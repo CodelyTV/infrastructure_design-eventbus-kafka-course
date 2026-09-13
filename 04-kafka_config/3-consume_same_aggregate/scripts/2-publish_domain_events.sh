@@ -17,4 +17,5 @@ publish() {
 }
 
 publish codely.mooc.course.created '"name":"Kafka share consumers","duration":"3 hours"'
+publish codely.mooc.course.renamed '"name":"Kafka share consumers: same aggregate"'
 publish codely.mooc.new-courses-newsletter-email.sent '"student_id":"'$(uuidgen | tr '[:upper:]' '[:lower:]')'"'

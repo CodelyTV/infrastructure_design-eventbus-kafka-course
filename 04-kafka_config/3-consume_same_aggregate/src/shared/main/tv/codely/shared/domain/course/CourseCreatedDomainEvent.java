@@ -12,7 +12,7 @@ public record CourseCreatedDomainEvent(
     String occurredOn,
     String name,
     String duration
-) implements DomainEvent {
+) implements CourseDomainEvent {
 
     public CourseCreatedDomainEvent() {
         this(null, null, null, null, null);

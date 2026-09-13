@@ -52,6 +52,6 @@ public final class DomainEventShareGroups {
             return domainEventsInformation.eventNames();
         }
 
-        return List.of(domainEventsInformation.forClass(event));
+        return domainEventsInformation.eventNamesMatching(domainEventsInformation.forClass(event));
     }
 }
