@@ -40,7 +40,7 @@ allprojects {
     }
 
     repositories {
-        mavenLocal()
+        maven { url = rootProject.file("lib/maven").toURI() }
         mavenCentral()
     }
 

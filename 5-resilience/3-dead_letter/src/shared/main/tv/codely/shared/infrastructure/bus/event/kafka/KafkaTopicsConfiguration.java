@@ -11,6 +11,7 @@ import tv.codely.shared.infrastructure.config.ParameterNotExist;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Configuration
 public class KafkaTopicsConfiguration {
@@ -18,10 +19,12 @@ public class KafkaTopicsConfiguration {
 
     private final Parameter         config;
     private final DomainEventTopics topics;
+    private final DeadLetterTopics  deadLetterTopics;
 
-    public KafkaTopicsConfiguration(Parameter config, DomainEventTopics topics) {
-        this.config = config;
-        this.topics = topics;
+    public KafkaTopicsConfiguration(Parameter config, DomainEventTopics topics, DeadLetterTopics deadLetterTopics) {
+        this.config           = config;
+        this.topics           = topics;
+        this.deadLetterTopics = deadLetterTopics;
     }
 
     @Bean
@@ -42,8 +45,7 @@ public class KafkaTopicsConfiguration {
         int partitions        = config.getInt("KAFKA_TOPICS_PARTITIONS");
         int replicationFactor = config.getInt("KAFKA_TOPICS_REPLICATION_FACTOR");
 
-        NewTopic[] newTopics = topics.all()
-                                     .stream()
+        NewTopic[] newTopics = Stream.concat(topics.all().stream(), deadLetterTopics.all().stream())
                                      .map(topic -> TopicBuilder.name(topic.name())
                                                                .partitions(partitions)
                                                                .replicas(replicationFactor)

@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
+import tv.codely.apps.backoffice.backend.command.ConsumeKafkaDeadLettersCommand;
 import tv.codely.apps.backoffice.backend.command.ConsumeKafkaDomainEventsCommand;
 import tv.codely.shared.domain.Service;
 
@@ -20,6 +21,7 @@ public class BackofficeBackendApplication {
 		return new HashMap<String, Class<?>>() {
 			{
 				put("domain-events:kafka:consume", ConsumeKafkaDomainEventsCommand.class);
+				put("domain-events:kafka:dead-letter:consume", ConsumeKafkaDeadLettersCommand.class);
 			}
 		};
 	}

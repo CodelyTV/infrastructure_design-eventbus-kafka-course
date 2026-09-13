@@ -4,7 +4,7 @@ import tv.codely.shared.infrastructure.bus.event.DomainEventSubscriberInformatio
 
 import java.util.List;
 
-public record DomainEventShareGroup(String name, Class<?> subscriberClass, List<String> topics) {
+public record DomainEventShareGroup(String name, String contextName, Class<?> subscriberClass, List<String> topics) {
     public static String nameFor(DomainEventSubscriberInformation subscriber) {
         return String.format(
             "codely.%s.%s.%s",
@@ -12,6 +12,10 @@ public record DomainEventShareGroup(String name, Class<?> subscriberClass, List<
             subscriber.moduleName(),
             toKebabCase(subscriber.className())
         );
+    }
+
+    public DeadLetterTopic deadLetterTopic() {
+        return new DeadLetterTopic(contextName);
     }
 
     private static String toKebabCase(String text) {

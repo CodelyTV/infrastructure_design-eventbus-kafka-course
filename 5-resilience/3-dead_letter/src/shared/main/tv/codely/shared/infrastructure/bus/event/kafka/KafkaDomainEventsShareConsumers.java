@@ -1,6 +1,5 @@
 package tv.codely.shared.infrastructure.bus.event.kafka;
 
-import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.core.ShareConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.ShareKafkaMessageListenerContainer;
@@ -14,26 +13,31 @@ import java.util.function.BiConsumer;
 
 @Service
 public final class KafkaDomainEventsShareConsumers {
-    private final DomainEventShareGroups allShareGroups;
+    private final DomainEventShareGroups                                   allShareGroups;
+    private final KafkaShareGroupsDeadLetterConfigurer                     deadLetterConfigurer;
     private final ShareConsumerFactory<String, String>                     consumerFactory;
     private final DomainEventJsonDeserializer                              deserializer;
-    private final ApplicationContext                                       context;
+    private final DomainEventSubscriberInvoker                             invoker;
     private final List<ShareKafkaMessageListenerContainer<String, String>> containers = new ArrayList<>();
 
     public KafkaDomainEventsShareConsumers(
         DomainEventShareGroups allShareGroups,
+        KafkaShareGroupsDeadLetterConfigurer deadLetterConfigurer,
         ShareConsumerFactory<String, String> consumerFactory,
         DomainEventJsonDeserializer deserializer,
-        ApplicationContext context
+        DomainEventSubscriberInvoker invoker
     ) {
-        this.allShareGroups  = allShareGroups;
-        this.consumerFactory = consumerFactory;
-        this.deserializer    = deserializer;
-        this.context         = context;
+        this.allShareGroups       = allShareGroups;
+        this.deadLetterConfigurer = deadLetterConfigurer;
+        this.consumerFactory      = consumerFactory;
+        this.deserializer         = deserializer;
+        this.invoker              = invoker;
     }
 
     public List<DomainEventShareGroup> start(BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed) {
         List<DomainEventShareGroup> shareGroups = allShareGroups.all().stream().filter(this::hasSubscriberBean).toList();
+
+        deadLetterConfigurer.configure(shareGroups);
 
         shareGroups.forEach(shareGroup -> {
             ShareKafkaMessageListenerContainer<String, String> container = containerFor(shareGroup, onConsumed);
@@ -50,7 +54,7 @@ public final class KafkaDomainEventsShareConsumers {
     }
 
     private boolean hasSubscriberBean(DomainEventShareGroup shareGroup) {
-        return context.getBeanNamesForType(shareGroup.subscriberClass()).length > 0;
+        return invoker.hasSubscriber(shareGroup.subscriberClass());
     }
 
     private ShareKafkaMessageListenerContainer<String, String> containerFor(
@@ -64,7 +68,7 @@ public final class KafkaDomainEventsShareConsumers {
         properties.setMessageListener(
             new KafkaDomainEventShareConsumer(
                 shareGroup,
-                context.getBean(shareGroup.subscriberClass()),
+                invoker,
                 deserializer,
                 onConsumed
             )

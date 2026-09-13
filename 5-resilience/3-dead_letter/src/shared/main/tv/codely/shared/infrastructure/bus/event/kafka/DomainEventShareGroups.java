@@ -33,6 +33,7 @@ public final class DomainEventShareGroups {
     private DomainEventShareGroup shareGroupFor(DomainEventSubscriberInformation subscriber) {
         return new DomainEventShareGroup(
             DomainEventShareGroup.nameFor(subscriber),
+            subscriber.contextName(),
             subscriber.subscriberClass(),
             topicsFor(subscriber)
         );

@@ -8,29 +8,25 @@ import tv.codely.shared.domain.bus.event.DomainEvent;
 import tv.codely.shared.infrastructure.bus.event.DomainEventJsonDeserializer;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 public final class KafkaDomainEventShareConsumer implements AcknowledgingShareConsumerAwareMessageListener<String, String> {
     private static final Duration BACKOFF_STEP = Duration.ofSeconds(2);
 
     private final DomainEventShareGroup                          shareGroup;
-    private final Object                                         subscriber;
-    private final Method                                         handler;
+    private final DomainEventSubscriberInvoker                   invoker;
     private final DomainEventJsonDeserializer                    deserializer;
     private final BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed;
 
     public KafkaDomainEventShareConsumer(
         DomainEventShareGroup shareGroup,
-        Object subscriber,
+        DomainEventSubscriberInvoker invoker,
         DomainEventJsonDeserializer deserializer,
         BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed
     ) {
         this.shareGroup   = shareGroup;
-        this.subscriber   = subscriber;
-        this.handler      = handlerOf(subscriber);
+        this.invoker      = invoker;
         this.deserializer = deserializer;
         this.onConsumed   = onConsumed;
     }
@@ -54,7 +50,7 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
         waitBackoffFor(record);
 
         try {
-            handler.invoke(subscriber, event);
+            invoker.invoke(shareGroup.subscriberClass(), event);
             acknowledgment.acknowledge();
             onConsumed.accept(shareGroup, event);
         } catch (InvocationTargetException | IllegalAccessException error) {
@@ -74,16 +70,5 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    private static Method handlerOf(Object subscriber) {
-        return Arrays.stream(subscriber.getClass().getMethods())
-                     .filter(method -> method.getName().equals("on"))
-                     .filter(method -> method.getParameterCount() == 1)
-                     .filter(method -> DomainEvent.class.isAssignableFrom(method.getParameterTypes()[0]))
-                     .findFirst()
-                     .orElseThrow(() -> new IllegalArgumentException(
-                         String.format("The subscriber <%s> has no on(DomainEvent) method", subscriber.getClass().getName())
-                     ));
     }
 }

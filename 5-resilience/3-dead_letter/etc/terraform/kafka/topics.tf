@@ -35,3 +35,29 @@ resource "kafka_topic" "codely_mooc_new_courses_newsletter_email_sent" {
     "retention.ms"        = "-1"
   }
 }
+
+resource "kafka_topic" "dlq_codely_backoffice" {
+  name               = "dlq.codely.backoffice"
+  partitions         = var.partitions
+  replication_factor = var.replication_factor
+
+  config = {
+    "cleanup.policy"                      = "delete"
+    "errors.deadletterqueue.group.enable" = "true"
+    "min.insync.replicas"                 = var.min_insync_replicas
+    "retention.ms"                        = "2592000000"
+  }
+}
+
+resource "kafka_topic" "dlq_codely_mooc" {
+  name               = "dlq.codely.mooc"
+  partitions         = var.partitions
+  replication_factor = var.replication_factor
+
+  config = {
+    "cleanup.policy"                      = "delete"
+    "errors.deadletterqueue.group.enable" = "true"
+    "min.insync.replicas"                 = var.min_insync_replicas
+    "retention.ms"                        = "2592000000"
+  }
+}

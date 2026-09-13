@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 public final class KafkaTopicsTerraformGenerator {
     private static final String HEADER = "# Generated from the domain events by domain-events:kafka:terraform:generate. Do not edit by hand.\n";
 
-    public String generate(List<DomainEventTopic> topics) {
+    public String generate(List<? extends KafkaTopic> topics) {
         return topics.stream().map(this::resource).collect(Collectors.joining("\n", HEADER + "\n", ""));
     }
 
-    private String resource(DomainEventTopic topic) {
+    private String resource(KafkaTopic topic) {
         return String.format(
             """
             resource "kafka_topic" "%s" {
@@ -34,7 +34,7 @@ public final class KafkaTopicsTerraformGenerator {
         );
     }
 
-    private String configBlock(DomainEventTopic topic) {
+    private String configBlock(KafkaTopic topic) {
         Map<String, String> entries = new TreeMap<>();
 
         topic.configs().forEach((key, value) -> entries.put(key, String.format("\"%s\"", value)));

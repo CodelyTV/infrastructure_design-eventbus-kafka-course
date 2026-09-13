@@ -50,6 +50,18 @@ final class DomainEventShareGroupsShould {
 		assertTrue(events.eventNames().stream().noneMatch(name -> name.contains("*")));
 	}
 
+	@Test
+	void route_the_dead_letters_of_every_share_group_to_the_dead_letter_topic_of_its_context() {
+		assertEquals(
+			"dlq.codely.mooc",
+			shareGroupNamed("codely.mooc.courses.log-course-events-on-course-events").deadLetterTopic().name()
+		);
+		assertEquals(
+			"dlq.codely.backoffice",
+			shareGroupNamed("codely.backoffice.courses.create-backoffice-course-on-course-created").deadLetterTopic().name()
+		);
+	}
+
 	private DomainEventShareGroup shareGroupNamed(String name) {
 		return shareGroups.all().stream().filter(group -> group.name().equals(name)).findFirst().orElseThrow();
 	}
