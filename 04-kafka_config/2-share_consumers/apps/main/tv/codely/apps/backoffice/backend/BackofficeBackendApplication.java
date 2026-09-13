@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
+import tv.codely.apps.backoffice.backend.command.ConsumeKafkaDomainEventsCommand;
 import tv.codely.shared.domain.Service;
 
 @SpringBootApplication
@@ -17,7 +18,9 @@ public class BackofficeBackendApplication {
 
 	public static HashMap<String, Class<?>> commands() {
 		return new HashMap<String, Class<?>>() {
-			{}
+			{
+				put("domain-events:kafka:consume", ConsumeKafkaDomainEventsCommand.class);
+			}
 		};
 	}
 }

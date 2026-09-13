@@ -1,2 +1,0 @@
-POST http://localhost:8030/event-bus/republish-failover-events
-Content-Type: application/json

@@ -30,3 +30,9 @@ start-backoffice_frontend:
 
 generate-kafka-terraform:
 	@docker compose exec test_server_java ./gradlew :bootRun --args='mooc_backend domain-events:kafka:terraform:generate'
+
+consume-kafka-domain-events-mooc:
+	@docker compose exec test_server_java ./gradlew :bootRun --args='mooc_backend domain-events:kafka:consume'
+
+consume-kafka-domain-events-backoffice:
+	@docker compose exec test_server_java ./gradlew :bootRun --args='backoffice_backend domain-events:kafka:consume'
