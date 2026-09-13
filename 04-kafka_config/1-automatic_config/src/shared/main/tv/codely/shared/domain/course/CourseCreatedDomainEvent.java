@@ -6,35 +6,20 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Objects;
 
-public final class CourseCreatedDomainEvent extends DomainEvent {
-    private final String name;
-    private final String duration;
+public record CourseCreatedDomainEvent(
+    String aggregateId,
+    String eventId,
+    String occurredOn,
+    String name,
+    String duration
+) implements DomainEvent {
 
     public CourseCreatedDomainEvent() {
-        super(null);
-
-        this.name     = null;
-        this.duration = null;
+        this(null, null, null, null, null);
     }
 
     public CourseCreatedDomainEvent(String aggregateId, String name, String duration) {
-        super(aggregateId);
-
-        this.name     = name;
-        this.duration = duration;
-    }
-
-    public CourseCreatedDomainEvent(
-        String aggregateId,
-        String eventId,
-        String occurredOn,
-        String name,
-        String duration
-    ) {
-        super(aggregateId, eventId, occurredOn);
-
-        this.name     = name;
-        this.duration = duration;
+        this(aggregateId, DomainEvent.generateEventId(), DomainEvent.now(), name, duration);
     }
 
     @Override
@@ -67,14 +52,6 @@ public final class CourseCreatedDomainEvent extends DomainEvent {
         );
     }
 
-    public String name() {
-        return name;
-    }
-
-    public String duration() {
-        return duration;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -84,8 +61,8 @@ public final class CourseCreatedDomainEvent extends DomainEvent {
             return false;
         }
         CourseCreatedDomainEvent that = (CourseCreatedDomainEvent) o;
-        return name.equals(that.name) &&
-               duration.equals(that.duration);
+        return Objects.equals(name, that.name) &&
+               Objects.equals(duration, that.duration);
     }
 
     @Override

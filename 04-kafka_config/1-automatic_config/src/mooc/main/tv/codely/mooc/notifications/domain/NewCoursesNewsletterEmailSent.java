@@ -6,30 +6,19 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Objects;
 
-public final class NewCoursesNewsletterEmailSent extends DomainEvent {
-    private final String studentId;
+public record NewCoursesNewsletterEmailSent(
+    String aggregateId,
+    String eventId,
+    String occurredOn,
+    String studentId
+) implements DomainEvent {
 
     public NewCoursesNewsletterEmailSent() {
-        super(null);
-
-        this.studentId = null;
+        this(null, null, null, null);
     }
 
     public NewCoursesNewsletterEmailSent(String aggregateId, String studentId) {
-        super(aggregateId);
-
-        this.studentId = studentId;
-    }
-
-    public NewCoursesNewsletterEmailSent(
-        String aggregateId,
-        String eventId,
-        String occurredOn,
-        String studentId
-    ) {
-        super(aggregateId, eventId, occurredOn);
-
-        this.studentId = studentId;
+        this(aggregateId, DomainEvent.generateEventId(), DomainEvent.now(), studentId);
     }
 
     @Override
@@ -68,7 +57,7 @@ public final class NewCoursesNewsletterEmailSent extends DomainEvent {
             return false;
         }
         NewCoursesNewsletterEmailSent that = (NewCoursesNewsletterEmailSent) o;
-        return studentId.equals(that.studentId);
+        return Objects.equals(studentId, that.studentId);
     }
 
     @Override

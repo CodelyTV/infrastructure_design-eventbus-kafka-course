@@ -7,46 +7,29 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.UUID;
 
-public abstract class DomainEvent {
-    protected String aggregateId;
-    private String eventId;
-    private String occurredOn;
+public interface DomainEvent {
+    String aggregateId();
 
-    public DomainEvent(String aggregateId) {
-        this.aggregateId = aggregateId;
-        this.eventId     = UUID.randomUUID().toString();
-        this.occurredOn  = Utils.dateToString(LocalDateTime.now());
-    }
+    String eventId();
 
-    public DomainEvent(String aggregateId, String eventId, String occurredOn) {
-        this.aggregateId = aggregateId;
-        this.eventId     = eventId;
-        this.occurredOn  = occurredOn;
-    }
+    String occurredOn();
 
-    protected DomainEvent() {
-    }
+    String eventName();
 
-    public abstract String eventName();
+    HashMap<String, Serializable> toPrimitives();
 
-    public abstract HashMap<String, Serializable> toPrimitives();
-
-    public abstract DomainEvent fromPrimitives(
+    DomainEvent fromPrimitives(
         String aggregateId,
         HashMap<String, Serializable> body,
         String eventId,
         String occurredOn
     );
 
-    public String aggregateId() {
-        return aggregateId;
+    static String generateEventId() {
+        return UUID.randomUUID().toString();
     }
 
-    public String eventId() {
-        return eventId;
-    }
-
-    public String occurredOn() {
-        return occurredOn;
+    static String now() {
+        return Utils.dateToString(LocalDateTime.now());
     }
 }
