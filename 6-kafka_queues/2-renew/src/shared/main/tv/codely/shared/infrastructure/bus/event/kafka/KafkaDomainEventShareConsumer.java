@@ -52,7 +52,7 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
 
         waitBackoffFor(record);
 
-        lockRenewer.consuming(record, consumer);
+        lockRenewer.setRenewThread(record, consumer);
 
         try {
             invoker.invoke(shareGroup.subscriberClass(), event);
