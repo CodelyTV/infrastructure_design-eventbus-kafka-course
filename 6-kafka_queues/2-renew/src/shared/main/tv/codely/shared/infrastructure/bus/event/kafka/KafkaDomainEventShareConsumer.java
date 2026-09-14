@@ -17,17 +17,20 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
     private final DomainEventShareGroup                          shareGroup;
     private final DomainEventSubscriberInvoker                   invoker;
     private final DomainEventJsonDeserializer                    deserializer;
+    private final KafkaDomainEventLockRenewer                    lockRenewer;
     private final BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed;
 
     public KafkaDomainEventShareConsumer(
         DomainEventShareGroup shareGroup,
         DomainEventSubscriberInvoker invoker,
         DomainEventJsonDeserializer deserializer,
+        KafkaDomainEventLockRenewer lockRenewer,
         BiConsumer<DomainEventShareGroup, DomainEvent> onConsumed
     ) {
         this.shareGroup   = shareGroup;
         this.invoker      = invoker;
         this.deserializer = deserializer;
+        this.lockRenewer  = lockRenewer;
         this.onConsumed   = onConsumed;
     }
 
@@ -48,6 +51,8 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
         }
 
         waitBackoffFor(record);
+
+        lockRenewer.consuming(record, consumer);
 
         try {
             invoker.invoke(shareGroup.subscriberClass(), event);
