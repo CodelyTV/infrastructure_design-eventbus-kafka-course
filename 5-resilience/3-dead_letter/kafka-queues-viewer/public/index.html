@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kafka Queues</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1b2130; --card: #1f4a3d; --card-dark: #173a30; --orange: #f39a3c; --orange-2: #f7b060;
+    --yellow: #ffe57a; --blue: #2d5be3; --gray: #c9cdd3; --green: #4caf50; --text: #f3f5f8; --muted: #a9b1c0;
+    --red: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 28px 40px 18px; gap: 24px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand svg { width: 64px; height: 64px; }
+  .brand h1 { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -1px; }
+  .brand h1 small { font-size: 22px; font-weight: 500; margin-left: 10px; color: var(--text); }
+  .legend { display: flex; gap: 28px; flex-wrap: wrap; }
+  .legend div { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; text-align: center; }
+  .legend .sq { width: 34px; height: 34px; border-radius: 4px; }
+  .legend .emoji { font-size: 32px; line-height: 34px; }
+  .status { padding: 0 40px 12px; font-size: 13px; color: var(--muted); display: flex; gap: 16px; align-items: center; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; }
+  .status .dot.err { background: var(--red); }
+  main { padding: 0 40px 60px; display: grid; gap: 22px; }
+  .topic { background: var(--card); border-radius: 26px; padding: 22px 34px 26px; position: relative; }
+  .topic.dlq { background: var(--card-dark); border: 1px solid rgba(243,154,60,.25); }
+  .topic h2 { margin: 0 0 18px; text-align: center; font-size: 24px; font-weight: 500; }
+  .topic h2 .badge { display: inline-block; font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 10px; padding: 3px 9px; border-radius: 999px; background: var(--blue); }
+  .topic h2 .badge.dlq { background: var(--orange); color: #1b2130; }
+  .meta { position: absolute; right: 30px; top: 22px; font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
+  .meta b { color: var(--text); }
+  .row { display: grid; grid-template-columns: 560px 220px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .share { background: linear-gradient(180deg, var(--orange-2), var(--orange)); border-radius: 18px; padding: 16px 20px; color: #1b2130; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .share .name { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600; word-break: break-all; }
+  .share .stats { display: flex; gap: 10px; align-items: flex-end; justify-content: space-between; }
+  .share .stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; }
+  .share .stat b { font-size: 26px; line-height: 1; font-weight: 700; }
+  .share .stat span { font-size: 11px; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: .3px; }
+  .share .stat.pending b { color: #7a2f0a; }
+  .envelopes { display: grid; grid-template-columns: repeat(10, 22px); gap: 4px; align-content: flex-end; align-items: center; justify-items: center; }
+  .env { width: 22px; height: 16px; flex: none; border-radius: 3px; background: #fff; border: 1px solid #c56a1a; position: relative; opacity: .95; }
+  .env::after { content: ""; position: absolute; left: 3px; right: 3px; top: 2px; height: 6px; border-left: 1px solid #c56a1a; border-right: 1px solid #c56a1a; border-bottom: 1px solid #c56a1a; transform: skewY(0); clip-path: polygon(0 0, 50% 100%, 100% 0); background: #f0e0c8; }
+  .env.done { background: #d9d9d9; opacity: .55; }
+  .env.dead { background: none; border: none; }
+  .env.dead::after { display: none; }
+  .env.dead::before { content: "❌"; position: absolute; inset: 0; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 1px; }
+  .arrow { display: flex; align-items: center; justify-content: center; height: 40px; }
+  .arrow svg { width: 100%; height: 24px; overflow: visible; }
+  .arrow line { stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; }
+  .arrow polygon { fill: var(--yellow); }
+
+  .consumer { display: flex; flex-direction: column; gap: 8px; }
+  .consumer .ears { display: flex; gap: 8px; align-items: center; font-size: 40px; line-height: 1; }
+  .consumer .ears .ear { position: relative; }
+  .consumer .ears .ear.off { filter: grayscale(1); opacity: .3; }
+  .consumer .ears .state { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.35); color: var(--text); align-self: center; }
+  .consumer .ears .state.Stable { background: var(--green); color: #fff; }
+  .consumer .ears .state.Empty, .consumer .ears .state.Dead { background: rgba(0,0,0,.35); color: var(--muted); }
+  .consumer .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
+  .consumer .cfg .k { text-decoration: underline wavy rgba(229,72,77,.8) 1px; text-underline-offset: 4px; }
+  .consumer .cfg a { color: var(--yellow); }
+  .consumer .cfg .dim { color: var(--muted); text-decoration: none; }
+  .members { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+  .empty { text-align: center; color: var(--muted); padding: 18px; font-size: 15px; }
+  .dead-list { display: grid; gap: 10px; margin-top: 8px; }
+  .dead { display: grid; grid-template-columns: 150px 1fr auto; gap: 16px; align-items: center; background: rgba(0,0,0,.25); border-radius: 14px; padding: 12px 16px; }
+  .dead .icon { font-size: 34px; text-align: center; position: relative; padding-bottom: 10px; }
+  .dead .icon .count { white-space: nowrap; position: absolute; left: 50%; transform: translateX(-50%); bottom: -12px; background: var(--text); color: #1b2130; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 6px; font-family: "JetBrains Mono", monospace; }
+  .dead .info { font-size: 13px; line-height: 1.55; min-width: 0; }
+  .dead .info .cause { color: var(--orange-2); font-weight: 600; }
+  .dead .info code { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--yellow); }
+  .dead .info .body { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; opacity: .85; }
+  .dead .info .body.bad { color: #ff9a9e; }
+  .dead .when { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+  .toggle { background: none; border: 1px solid rgba(255,255,255,.2); color: var(--text); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+  @media (max-width: 1100px) { .row { grid-template-columns: 1fr; } .arrow { transform: rotate(90deg); height: 30px; width: 80px; margin: 0 auto; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4"><circle cx="18" cy="32" r="8"/><circle cx="46" cy="14" r="7"/><circle cx="46" cy="50" r="7"/><circle cx="18" cy="8" r="6"/><circle cx="18" cy="56" r="6"/><line x1="18" y1="14" x2="18" y2="24"/><line x1="18" y1="40" x2="18" y2="50"/><line x1="25" y1="28" x2="40" y2="18"/><line x1="25" y1="36" x2="40" y2="46"/></svg>
+    <h1>kafka<small>Queues</small></h1>
+  </div>
+  <div class="legend">
+    <div><span class="emoji">🗣️</span>Producer</div>
+    <div><span class="sq" style="background:var(--blue)"></span>Topic</div>
+    <div><span class="sq" style="background:var(--gray)"></span>Partition</div>
+    <div><span class="sq" style="background:var(--green)"></span>Share<br>Group</div>
+    <div><span class="sq" style="background:var(--orange)"></span>Share<br>Partition</div>
+    <div><span class="emoji">👂</span>Consumer</div>
+  </div>
+</header>
+<div class="status"><span><span class="dot" id="dot"></span><span id="status">Connecting…</span></span><button class="toggle" id="toggleDone">Hide processed envelopes</button></div>
+<main id="main"><div class="empty">Loading the cluster…</div></main>
+<script>
+  let showDone = true;
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const id = (s) => "t-" + s.replace(/[^a-z0-9]/gi, "_");
+  const fmtRetention = (ms) => (!ms || ms === "-1") ? "∞" : Math.round(Number(ms) / 86400000) + "d";
+
+  function envelopes(processed, pending, dead) {
+    const MAX = 40;
+    const done = Math.max(processed - dead, 0);
+    const total = done + pending + dead;
+    const scale = total > MAX ? MAX / total : 1;
+    const n = (x) => Math.round(x * scale);
+    let html = "";
+    if (showDone) html += '<span class="env done"></span>'.repeat(n(done));
+    html += '<span class="env"></span>'.repeat(n(pending));
+    html += '<span class="env dead"></span>'.repeat(n(dead));
+    return html;
+  }
+
+  function shareRow(topic, group, deadLetters) {
+    const parts = group.partitions.filter((p) => p.topic === topic.name);
+    const processed = parts.reduce((a, p) => a + (p.processed || 0), 0);
+    const pending = parts.reduce((a, p) => a + (p.pending || 0), 0);
+    const dead = deadLetters.filter((d) => d.originalTopic === topic.name && d.failedShareGroup === group.name).length;
+    const active = group.memberCount > 0;
+    const ears = active
+      ? group.members.map((m) => `<span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}">👂</span>`).join("")
+      : '<span class="ear off" title="no consumer connected">👂</span>';
+    const cfg = group.deadLetterTopic
+      ? `<div class="cfg"><span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a><br><span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}</div>`
+      : `<div class="cfg"><span class="k">share.auto.offset.reset</span>: ${esc(group.autoOffsetReset)}<br><span class="dim">share.delivery.count.limit: ${group.deliveryCountLimit} · lock ${group.recordLockMs / 1000}s</span></div>`;
+    return `
+      <div class="row">
+        <div class="share">
+          <div class="name">${esc(group.name)}</div>
+          <div class="stats">
+            <div class="envelopes">${envelopes(processed, pending, dead)}</div>
+            <div style="display:flex;gap:10px">
+              <div class="stat"><b>${processed}</b><span>processed</span></div>
+              <div class="stat pending"><b>${pending}</b><span>pending</span></div>
+              ${dead ? `<div class="stat"><b style="color:var(--red)">${dead}</b><span>dead</span></div>` : ""}
+            </div>
+          </div>
+        </div>
+        <div class="arrow ${active ? "" : "idle"}"><svg viewBox="0 0 220 24" preserveAspectRatio="none"><line x1="14" y1="12" x2="218" y2="12" /><polygon points="0,12 18,4 18,20" /></svg></div>
+        <div class="consumer">
+          <div class="ears">${ears}<span class="state ${esc(group.state)}">${esc(group.state)} · ${group.memberCount} member${group.memberCount === 1 ? "" : "s"}</span></div>
+          ${cfg}
+          ${active ? `<div class="members">${group.members.map((m) => esc(m.host) + " · " + m.assignment.map(esc).join(", ")).join("<br>")}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function deadRow(d) {
+    const bad = !d.body.trim().startsWith("{") || !(() => { try { JSON.parse(d.body); return true; } catch { return false; } })();
+    return `
+      <div class="dead">
+        <div class="icon">${d.cause.startsWith("Offset rejected") ? "❌" : d.cause.startsWith("Offset delivery count") ? "🔄" : "✉️"}<span class="count">delivery-count=${d.deliveryCount}</span></div>
+        <div class="info">
+          <span class="cause">${esc(d.cause)}</span><br>
+          from <code>${esc(d.originalTopic)}</code> #${d.originalPartition}@${d.originalOffset} · failed in <code>${esc(d.failedShareGroup)}</code><br>
+          key <code>${esc(d.key)}</code>
+          <span class="body ${bad ? "bad" : ""}" title="${esc(d.body)}">${esc(d.body)}</span>
+        </div>
+        <div class="when">offset ${d.offset}<br>${new Date(d.timestamp).toLocaleString()}</div>
+      </div>`;
+  }
+
+  function topicCard(topic, groups, deadLetters) {
+    const consumers = groups.filter((g) => g.topics.includes(topic.name));
+    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
+    const producedBy = topic.isDeadLetter ? [...new Set(deadHere.map((d) => d.failedShareGroup))] : [];
+    return `
+      <section class="topic ${topic.isDeadLetter ? "dlq" : ""}" id="${id(topic.name)}">
+        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)}${topic.isDeadLetter ? " · dead letter queue" : ""}</div>
+        <h2>${esc(topic.name)}<span class="badge ${topic.isDeadLetter ? "dlq" : ""}">${topic.isDeadLetter ? "DLQ" : "topic"}</span></h2>
+        ${consumers.length ? consumers.map((g) => shareRow(topic, g, deadLetters)).join("") : '<div class="empty">No share group consumes this topic</div>'}
+        ${topic.isDeadLetter ? `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>` : ""}
+      </section>`;
+  }
+
+  function render(state) {
+    const dot = document.getElementById("dot");
+    dot.className = "dot" + (state.error ? " err" : "");
+    document.getElementById("status").textContent = state.error
+      ? "Error: " + state.error
+      : `${state.topics.length} topics · ${state.shareGroups.length} share groups · ${state.deadLetters.length} dead letters · updated ${new Date(state.updatedAt).toLocaleTimeString()}`;
+    if (!state.topics.length) return;
+    const domain = state.topics.filter((t) => !t.isDeadLetter);
+    const dlq = state.topics.filter((t) => t.isDeadLetter);
+    document.getElementById("main").innerHTML = [...domain, ...dlq].map((t) => topicCard(t, state.shareGroups, state.deadLetters)).join("");
+  }
+
+  let last = null;
+  async function poll() {
+    try {
+      const state = await (await fetch("/api/state")).json();
+      last = state;
+      render(state);
+    } catch (e) {
+      document.getElementById("status").textContent = "Viewer unreachable: " + e.message;
+      document.getElementById("dot").className = "dot err";
+    }
+  }
+  document.getElementById("toggleDone").onclick = (e) => { showDone = !showDone; e.target.textContent = showDone ? "Hide processed envelopes" : "Show processed envelopes"; if (last) render(last); };
+  poll();
+  setInterval(poll, 3000);
+</script>
+</body>
+</html>
