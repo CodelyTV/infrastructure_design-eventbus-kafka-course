@@ -17,14 +17,14 @@ import static org.mockito.Mockito.verify;
 
 final class LogCourseEventsOnCourseEventsShould extends CoursesModuleUnitTestCase {
     private Logger                       logger;
-    private LogCourseEventsOnCourseEvents subscriber;
+    private LogCourseEventsOnCourseEvent subscriber;
 
     @BeforeEach
     protected void setUp() {
         super.setUp();
 
         logger     = mock(Logger.class);
-        subscriber = new LogCourseEventsOnCourseEvents(logger);
+        subscriber = new LogCourseEventsOnCourseEvent(logger);
     }
 
     @Test

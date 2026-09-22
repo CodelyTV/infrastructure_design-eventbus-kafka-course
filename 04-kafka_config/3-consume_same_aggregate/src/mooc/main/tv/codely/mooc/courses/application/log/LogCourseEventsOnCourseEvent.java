@@ -11,10 +11,10 @@ import java.util.HashMap;
 
 @Service
 @DomainEventSubscriber({CourseDomainEvent.class})
-public final class LogCourseEventsOnCourseEvents {
+public final class LogCourseEventsOnCourseEvent {
     private final Logger logger;
 
-    public LogCourseEventsOnCourseEvents(Logger logger) {
+    public LogCourseEventsOnCourseEvent(Logger logger) {
         this.logger = logger;
     }
 
