@@ -52,26 +52,22 @@
   .cell .dc.hot { background: #1b2130; color: var(--yellow); }
   .cell .dc.none { visibility: hidden; }
   .cell .more { font-size: 9px; line-height: 16px; color: #1b2130; opacity: .7; font-weight: 600; }
-  .env { width: 22px; height: 16px; flex: none; display: block; border-radius: 3px; background: #fff; border: 1px solid #c56a1a; position: relative; opacity: .95; }
-  .env::after { content: ""; position: absolute; left: 3px; right: 3px; top: 2px; height: 6px; border-left: 1px solid #c56a1a; border-right: 1px solid #c56a1a; border-bottom: 1px solid #c56a1a; transform: skewY(0); clip-path: polygon(0 0, 50% 100%, 100% 0); background: #f0e0c8; }
-  .env.done { background: #d9d9d9; opacity: .55; }
-  .env.acquired { box-shadow: 0 0 0 2px var(--yellow); }
-  .env.dead { background: none; border: none; }
-  .env.dead::after { display: none; }
+  .env { width: 22px; height: 16px; flex: none; display: block; position: relative; }
+  .env::before { content: "✉️"; position: absolute; inset: 0; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .env.done { opacity: .35; }
+  .env.acquired { border-radius: 4px; box-shadow: 0 0 0 2px var(--yellow); }
+  .env.dead { display: block; background: none; padding: 0; border-radius: 0; }
   .env.dead.redelivery::before { content: "🔄"; }
-  .env.dead::before { content: "❌"; position: absolute; inset: 0; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 1px; }
+  .env.dead::before { content: "❌"; font-size: 13px; }
   .arrows { width: 100%; height: 100%; align-self: stretch; overflow: visible; }
   .arrows path { stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; fill: none; }
   .arrows polygon { fill: var(--yellow); }
   .arrows.idle { opacity: .35; }
 
-  .consumer { display: flex; flex-direction: column; gap: 8px; }
-  .consumer .ears { display: flex; gap: 8px; align-items: center; font-size: 40px; line-height: 1; }
-  .consumer .ears .ear { position: relative; }
-  .consumer .ears .ear.off { filter: grayscale(1); opacity: .3; }
-  .consumer .ears .state { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.35); color: var(--text); align-self: center; }
-  .consumer .ears .state.Stable { background: var(--green); color: #fff; }
-  .consumer .ears .state.Empty, .consumer .ears .state.Dead { background: rgba(0,0,0,.35); color: var(--muted); }
+  .consumer { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .consumer .member { display: flex; gap: 12px; align-items: center; }
+  .consumer .ear { font-size: 40px; line-height: 1; }
+  .consumer .ear.off { filter: grayscale(1); opacity: .3; }
   .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
   .cfg a { color: var(--yellow); }
   .members { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
@@ -153,7 +149,7 @@
     const items = cells(topic, group, deadLetters, group.deliveryCountLimit || 5);
     const dead = items.filter((i) => i.kind === "dead").length;
     return `
-      <div class="share" id="${id(topic.name)}">
+      <div class="share" id="${id(topic.name)}" data-topic="${esc(topic.name)}">
         <div class="name">${esc(topic.name)}</div>
         <div class="sub"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"} · retention ${fmtRetention(topic.retentionMs)}</div>
         <div class="stats">
@@ -169,32 +165,41 @@
 
   function consumerBlock(group) {
     const active = group.memberCount > 0;
-    const ears = active
-      ? group.members.map((m) => `<span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}">👂</span>`).join("")
-      : '<span class="ear off" title="no consumer connected">👂</span>';
+    const members = active
+      ? group.members.map((m) => `
+          <div class="member">
+            <span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}" data-topics="${esc(m.assignment.map((a) => a.replace(/:\d+$/, "")).join("|"))}">👂</span>
+            <span class="members">${m.assignment.map(esc).join(", ")}</span>
+          </div>`).join("")
+      : `<div class="member"><span class="ear off" title="no consumer connected" data-topics="${esc(group.topics.join("|"))}">👂</span></div>`;
     return `
       <div class="consumer">
-        <div class="ears">${ears}<span class="state ${esc(group.state)}">${esc(group.state)} · ${group.memberCount} member${group.memberCount === 1 ? "" : "s"}</span></div>
-        ${active ? `<div class="members">${group.members.map((m) => esc(m.host) + " · " + m.assignment.map(esc).join(", ")).join("<br>")}</div>` : ""}
+        ${members}
       </div>`;
+  }
+
+  function arrow(x0, fromY, x1, toY) {
+    const angle = Math.atan2(toY - fromY, x1 - x0);
+    const tip = (dx, dy) => `${x1 + dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
+    return `<path d="M ${x0} ${fromY} L ${x1} ${toY}" /><polygon points="${tip(18, 0)} ${tip(0, -8)} ${tip(0, 8)}" />`;
   }
 
   function drawArrows() {
     for (const body of document.querySelectorAll(".group-body")) {
       const svg = body.querySelector(".arrows");
-      const ears = body.querySelector(".ears");
-      if (!svg || !ears) continue;
+      if (!svg) continue;
       const box = svg.getBoundingClientRect();
-      const from = ears.getBoundingClientRect();
-      const fromY = from.top + from.height / 2 - box.top;
-      const paths = [...body.querySelectorAll(".share")].map((share) => {
-        const r = share.getBoundingClientRect();
-        const toY = r.top + r.height / 2 - box.top;
-        const x0 = box.width - 4, x1 = 18;
-        const angle = Math.atan2(toY - fromY, x1 - x0);
-        const tip = (dx, dy) => `${x1 + dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
-        return `<path d="M ${x0} ${fromY} L ${x1} ${toY}" /><polygon points="${tip(18, 0)} ${tip(0, -8)} ${tip(0, 8)}" />`;
-      });
+      const shares = [...body.querySelectorAll(".share")];
+      const paths = [];
+      for (const ear of body.querySelectorAll(".ear")) {
+        const from = ear.getBoundingClientRect();
+        const fromY = from.top + from.height / 2 - box.top;
+        const topics = new Set(ear.dataset.topics.split("|").filter(Boolean));
+        for (const share of shares.filter((el) => topics.has(el.dataset.topic))) {
+          const r = share.getBoundingClientRect();
+          paths.push(arrow(box.width - 4, fromY, 18, r.top + r.height / 2 - box.top));
+        }
+      }
       svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
       svg.innerHTML = paths.join("");
     }
@@ -268,7 +273,7 @@
     dot.className = "dot" + (state.error ? " err" : "");
     document.getElementById("status").textContent = state.error
       ? "Error: " + state.error
-      : `${state.topics.length} topics · ${state.shareGroups.length} share groups · ${state.deadLetters.length} dead letters · updated ${new Date(state.updatedAt).toLocaleTimeString()}`;
+      : `Updated ${new Date(state.updatedAt).toLocaleTimeString("en-GB", { hour12: false })}`;
     if (!state.topics.length) return;
     const consumedNames = new Set(state.shareGroups.flatMap((g) => g.topics));
     const orphans = state.topics.filter((t) => t.isDeadLetter && !consumedNames.has(t.name));
