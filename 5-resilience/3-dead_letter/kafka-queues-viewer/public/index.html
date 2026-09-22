@@ -54,7 +54,7 @@
   .cell .more { font-size: 9px; line-height: 16px; color: #1b2130; opacity: .7; font-weight: 600; }
   .env { width: 22px; height: 16px; flex: none; display: block; position: relative; }
   .env::before { content: "✉️"; position: absolute; inset: 0; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
-  .env.done { opacity: .35; }
+  .env.done::before { content: "✅"; font-size: 13px; }
   .env.acquired { border-radius: 4px; box-shadow: 0 0 0 2px var(--yellow); }
   .env.dead { display: block; background: none; padding: 0; border-radius: 0; }
   .env.dead.redelivery::before { content: "🔄"; }
@@ -134,12 +134,12 @@
   function envelopes(items) {
     const MAX = 40;
     const hidden = Math.max(items.length - MAX, 0);
-    const shown = items.slice(hidden).reverse();
-    return shown.map((it) => {
+    const shown = items.slice(hidden);
+    return (hidden ? `<span class="cell"><i class="dc none"></i><span class="more">+${hidden}</span></span>` : "") + shown.map((it) => {
       if (it.kind === "done") return '<span class="cell"><i class="dc none"></i><span class="env done"></span></span>';
       if (it.kind === "dead") return `<span class="cell"><i class="dc none"></i><span class="env dead ${it.reason}"></span></span>`;
       return `<span class="cell"><i class="dc ${it.count > 1 ? "hot" : ""}">${it.count}</i><span class="env ${it.kind}"></span></span>`;
-    }).join("") + (hidden ? `<span class="cell"><i class="dc none"></i><span class="more">+${hidden}</span></span>` : "");
+    }).join("");
   }
 
   function shareRow(topic, group, deadLetters) {
