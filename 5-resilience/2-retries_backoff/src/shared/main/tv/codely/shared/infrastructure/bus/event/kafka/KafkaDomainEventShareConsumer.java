@@ -14,7 +14,8 @@ import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 public final class KafkaDomainEventShareConsumer implements AcknowledgingShareConsumerAwareMessageListener<String, String> {
-    private static final Duration BACKOFF_STEP = Duration.ofSeconds(2);
+    private static final Duration BACKOFF_BASE = Duration.ofSeconds(2);
+    private static final Duration BACKOFF_MAX  = Duration.ofMinutes(1);
 
     private final DomainEventShareGroup                          shareGroup;
     private final Object                                         subscriber;
@@ -70,10 +71,17 @@ public final class KafkaDomainEventShareConsumer implements AcknowledgingShareCo
         }
 
         try {
-            Thread.sleep(BACKOFF_STEP.multipliedBy(deliveryCount));
+            Thread.sleep(exponentialBackoffFor(deliveryCount));
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static Duration exponentialBackoffFor(short deliveryCount) {
+        long multiplier = 1L << Math.min(deliveryCount - 1, 30);
+        Duration backoff = BACKOFF_BASE.multipliedBy(multiplier);
+
+        return backoff.compareTo(BACKOFF_MAX) > 0 ? BACKOFF_MAX : backoff;
     }
 
     private static Method handlerOf(Object subscriber) {
