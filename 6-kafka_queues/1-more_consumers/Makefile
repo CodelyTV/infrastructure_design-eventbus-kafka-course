@@ -42,3 +42,6 @@ consume-kafka-dead-letters-mooc:
 
 consume-kafka-dead-letters-backoffice:
 	@docker compose exec test_server_java ./gradlew :bootRun --args='backoffice_backend domain-events:kafka:dead-letter:consume'
+
+start-kafka-queues-viewer:
+	@node kafka-queues-viewer/server.js
