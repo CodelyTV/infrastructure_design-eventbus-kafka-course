@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kafka Queues</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1b2130; --card: #1f4a3d; --card-dark: #173a30; --orange: #f39a3c; --orange-2: #f7b060;
+    --yellow: #ffe57a; --blue: #2d5be3; --gray: #c9cdd3; --green: #4caf50; --text: #f3f5f8; --muted: #a9b1c0;
+    --red: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 28px 40px 18px; gap: 24px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand svg { width: 64px; height: 64px; }
+  .brand h1 { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -1px; }
+  .brand h1 small { font-size: 22px; font-weight: 500; margin-left: 10px; color: var(--text); }
+  .legend { display: flex; gap: 28px; flex-wrap: wrap; }
+  .legend div { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; text-align: center; }
+  .legend .sq { width: 34px; height: 34px; border-radius: 4px; }
+  .legend .emoji { font-size: 32px; line-height: 34px; }
+  .status { padding: 0 40px 12px; font-size: 13px; color: var(--muted); display: flex; gap: 16px; align-items: center; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; }
+  .status .dot.err { background: var(--red); }
+  main { padding: 0 40px 60px; display: grid; gap: 22px; }
+  .topic { background: var(--card); border-radius: 26px; padding: 22px 34px 26px; position: relative; }
+  .topic.dlq { background: var(--card-dark); border: 1px solid #ff927a; }
+  .topic h2 { margin: 0 0 18px; text-align: center; font-size: 24px; font-weight: 500; }
+  .topic h2 .badge { display: inline-block; font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 10px; padding: 3px 9px; border-radius: 999px; background: #78cfff; color: #1b2130; }
+  .topic h2 .badge.dlq { background: #ff927a; color: #1b2130; }
+  .meta { position: absolute; right: 30px; top: 22px; font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
+  .meta b { color: var(--text); }
+  .group-body { display: grid; grid-template-columns: 640px 200px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .topics { display: grid; gap: 12px; }
+  .share { scroll-margin-top: 24px; }
+  .share { background: var(--orange); border-radius: 18px; padding: 16px 28px 16px 20px; color: #1b2130; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+  .share .name { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600; word-break: break-all; }
+  .share .sub { font-size: 11px; font-weight: 500; opacity: .75; margin-top: -6px; }
+  .group-cfg { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .share .stats { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; }
+  .share .stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; flex: none; }
+  .share .stat b { font-size: 26px; line-height: 1; font-weight: 700; }
+  .share .stat span { font-size: 11px; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: .3px; }
+  .share .stat.pending b { color: #7a2f0a; }
+  .envelopes { display: grid; grid-template-columns: repeat(10, 26px); gap: 2px 4px; align-content: flex-end; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 26px; }
+  .cell .dc { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600; line-height: 12px; height: 12px; color: #1b2130; background: rgba(255,255,255,.75); border-radius: 4px; padding: 0 4px; font-style: normal; }
+  .cell .dc.hot { background: #1b2130; color: var(--yellow); }
+  .cell .dc.none { visibility: hidden; }
+  .cell .more { font-size: 9px; line-height: 16px; color: #1b2130; opacity: .7; font-weight: 600; }
+  .env { width: 22px; height: 16px; flex: none; display: block; position: relative; }
+  .env::before { content: "✉️"; position: absolute; inset: 0; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .env.done::before { content: "✅"; font-size: 13px; }
+  .env.acquired { border-radius: 4px; box-shadow: 0 0 0 2px var(--yellow); }
+  .env.dead { display: block; background: none; padding: 0; border-radius: 0; }
+  .env.dead.redelivery::before { content: "🔄"; }
+  .env.dead::before { content: "❌"; font-size: 13px; }
+  .arrows { width: 100%; height: 100%; align-self: stretch; overflow: visible; }
+  .arrows path { stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; fill: none; }
+  .arrows polygon { fill: var(--yellow); }
+  .arrows.idle { opacity: .35; }
+
+  .consumer { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .consumer .member { display: flex; gap: 12px; align-items: center; }
+  .consumer .ear { font-size: 40px; line-height: 1; }
+  .consumer .ear.off { filter: grayscale(1); opacity: .3; }
+  .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
+  .cfg a { color: var(--yellow); }
+  .members { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+  .empty { text-align: center; color: var(--muted); padding: 18px; font-size: 15px; }
+  .dead-list { display: grid; gap: 10px; margin-top: 18px; }
+  .dead { display: grid; grid-template-columns: 150px 1fr auto; gap: 16px; align-items: center; background: rgba(0,0,0,.25); border-radius: 14px; padding: 12px 16px; }
+  .dead .icon { font-size: 34px; text-align: center; position: relative; padding-bottom: 10px; }
+  .dead .icon .count { white-space: nowrap; position: absolute; left: 50%; transform: translateX(-50%); bottom: -12px; background: var(--text); color: #1b2130; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 6px; font-family: "JetBrains Mono", monospace; }
+  .dead .info { font-size: 13px; line-height: 1.55; min-width: 0; }
+  .dead .info .cause { color: var(--orange-2); font-weight: 600; }
+  .dead .info code { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--yellow); }
+  .dead .info .body { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; opacity: .85; }
+  .dead .info .body.bad { color: #ff9a9e; }
+  .dead .when { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+  @media (max-width: 1100px) { .group-body { grid-template-columns: 1fr; } .arrows { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4"><circle cx="18" cy="32" r="8"/><circle cx="46" cy="14" r="7"/><circle cx="46" cy="50" r="7"/><circle cx="18" cy="8" r="6"/><circle cx="18" cy="56" r="6"/><line x1="18" y1="14" x2="18" y2="24"/><line x1="18" y1="40" x2="18" y2="50"/><line x1="25" y1="28" x2="40" y2="18"/><line x1="25" y1="36" x2="40" y2="46"/></svg>
+    <h1>kafka<small>Queues</small></h1>
+  </div>
+  <div class="legend">
+    <div><span class="emoji">🗣️</span>Producer</div>
+    <div><span class="sq" style="background:var(--blue)"></span>Topic</div>
+    <div><span class="sq" style="background:var(--gray)"></span>Partition</div>
+    <div><span class="sq" style="background:var(--green)"></span>Share<br>Group</div>
+    <div><span class="sq" style="background:var(--orange)"></span>Share<br>Partition</div>
+    <div><span class="emoji">👂</span>Consumer</div>
+  </div>
+</header>
+<div class="status"><span><span class="dot" id="dot"></span><span id="status">Connecting…</span></span></div>
+<main id="main"><div class="empty">Loading the cluster…</div></main>
+<script>
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const id = (s) => "t-" + s.replace(/[^a-z0-9]/gi, "_");
+  const fmtRetention = (ms) => (!ms || ms === "-1") ? "∞" : Math.round(Number(ms) / 86400000) + "d";
+
+  function cells(topic, group, deadLetters, limit) {
+    const items = [];
+    for (const p of group.partitions.filter((x) => x.topic === topic.name)) {
+      const deadByOffset = {};
+      for (const d of deadLetters) {
+        if (d.originalTopic === topic.name && d.failedShareGroup === group.name && d.originalPartition === p.partition) deadByOffset[d.originalOffset] = d.cause.startsWith("Offset rejected") ? "rejected" : "redelivery";
+      }
+      const end = p.endOffset ?? 0;
+      const start = Math.max(p.stateStartOffset ?? p.startOffset ?? 0, 0);
+      for (let o = 0; o < end; o++) {
+        const flight = o >= start ? p.inFlight[o] : null;
+        const dead = deadByOffset[o];
+        if (dead != null || (flight && flight.state === 4 && flight.deliveryCount >= limit)) {
+          items.push({ kind: "dead", reason: dead ?? "redelivery" });
+        } else if (o < start || (flight && (flight.state === 2 || flight.state === 4))) {
+          items.push({ kind: "done" });
+        } else {
+          items.push({ kind: flight && flight.state === 1 ? "acquired" : "pending", count: flight ? flight.deliveryCount : 0 });
+        }
+      }
+    }
+    return items;
+  }
+
+  function envelopes(items) {
+    const MAX = 40;
+    const hidden = Math.max(items.length - MAX, 0);
+    const shown = items.slice(hidden);
+    return (hidden ? `<span class="cell"><i class="dc none"></i><span class="more">+${hidden}</span></span>` : "") + shown.map((it) => {
+      if (it.kind === "done") return '<span class="cell"><i class="dc none"></i><span class="env done"></span></span>';
+      if (it.kind === "dead") return `<span class="cell"><i class="dc none"></i><span class="env dead ${it.reason}"></span></span>`;
+      return `<span class="cell"><i class="dc ${it.count > 1 ? "hot" : ""}">${it.count}</i><span class="env ${it.kind}"></span></span>`;
+    }).join("");
+  }
+
+  function shareRow(topic, group, deadLetters) {
+    const parts = group.partitions.filter((p) => p.topic === topic.name);
+    const processed = parts.reduce((a, p) => a + (p.processed || 0), 0);
+    const pending = parts.reduce((a, p) => a + (p.pending || 0), 0);
+    const items = cells(topic, group, deadLetters, group.deliveryCountLimit || 5);
+    const dead = items.filter((i) => i.kind === "dead").length;
+    return `
+      <div class="share" id="${id(topic.name)}" data-topic="${esc(topic.name)}">
+        <div class="name">${esc(topic.name)}</div>
+        <div class="sub"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"} · retention ${fmtRetention(topic.retentionMs)}</div>
+        <div class="stats">
+          <div class="envelopes">${envelopes(items)}</div>
+          <div style="display:flex;gap:10px">
+            <div class="stat"><b>${processed}</b><span>processed</span></div>
+            <div class="stat pending"><b>${pending}</b><span>pending</span></div>
+            ${dead ? `<div class="stat"><b style="color:var(--red)">${dead}</b><span>dead</span></div>` : ""}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function consumerBlock(group) {
+    const active = group.memberCount > 0;
+    const members = active
+      ? group.members.map((m) => {
+          const topics = [...new Set(m.assignment.map((a) => a.replace(/:\d+$/, "")))];
+          return `
+          <div class="member">
+            <span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}" data-topics="${esc(topics.join("|"))}">👂</span>
+            <span class="members">${topics.map(esc).join(", ")}</span>
+          </div>`;
+        }).join("")
+      : `<div class="member"><span class="ear off" title="no consumer connected" data-topics="${esc(group.topics.join("|"))}">👂</span></div>`;
+    return `
+      <div class="consumer">
+        ${members}
+      </div>`;
+  }
+
+  function drawArrows() {
+    for (const body of document.querySelectorAll(".group-body")) {
+      const svg = body.querySelector(".arrows");
+      if (!svg) continue;
+      const box = svg.getBoundingClientRect();
+      const x0 = box.width - 4, x1 = 18;
+      const centerY = (el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2 - box.top; };
+      const parts = [];
+      for (const share of body.querySelectorAll(".share")) {
+        const toY = centerY(share);
+        const ears = [...body.querySelectorAll(".ear")].filter((ear) => ear.dataset.topics.split("|").includes(share.dataset.topic));
+        if (!ears.length) continue;
+        const fromYs = ears.map(centerY);
+        const meanY = fromYs.reduce((a, y) => a + y, 0) / fromYs.length;
+        const angle = Math.atan2(meanY - toY, x0);
+        const at = (dx, dy) => `${dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
+        const [baseX, baseY] = at(x1, 0).split(",");
+        for (const y of fromYs) parts.push(`<path d="M ${x0} ${y} L ${baseX} ${baseY}" />`);
+        parts.push(`<polygon points="0,${toY} ${at(x1, -8)} ${at(x1, 8)}" />`);
+      }
+      svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+      svg.innerHTML = parts.join("");
+    }
+  }
+
+  function groupConfig(group) {
+    const lines = group.deadLetterTopic
+      ? [
+          `<span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a>`,
+          `<span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}`,
+        ]
+      : [];
+    lines.push(`<span class="k">share.delivery.count.limit</span>: ${group.deliveryCountLimit}`);
+    lines.push(`<span class="k">share.record.lock.duration.ms</span>: ${group.recordLockMs}`);
+    return `<div class="cfg">${lines.join("<br>")}</div>`;
+  }
+
+  function deadList(topic, deadLetters) {
+    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
+    return `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>`;
+  }
+
+  function consumesDeadLetter(group, topics) {
+    return group.topics.some((name) => topics.find((t) => t.name === name)?.isDeadLetter);
+  }
+
+  function groupCard(group, topics, deadLetters) {
+    const consumed = group.topics.map((name) => topics.find((t) => t.name === name)).filter(Boolean);
+    const dlq = consumesDeadLetter(group, topics);
+    return `
+      <section class="topic ${dlq ? "dlq" : ""}" id="${id(group.name)}">
+        <h2>${esc(group.name)}</h2>
+        ${consumed.length ? `
+        <div class="group-body">
+          <div class="topics">${consumed.map((t) => shareRow(t, group, deadLetters)).join("")}</div>
+          <svg class="arrows ${group.memberCount > 0 ? "" : "idle"}" preserveAspectRatio="none"></svg>
+          ${consumerBlock(group)}
+        </div>` : '<div class="empty">This share group consumes no topic</div>'}
+        <div class="group-cfg">${groupConfig(group)}</div>
+        ${consumed.filter((t) => t.isDeadLetter).map((t) => deadList(t, deadLetters)).join("")}
+      </section>`;
+  }
+
+  function deadRow(d) {
+    const bad = !d.body.trim().startsWith("{") || !(() => { try { JSON.parse(d.body); return true; } catch { return false; } })();
+    return `
+      <div class="dead">
+        <div class="icon">${d.cause.startsWith("Offset rejected") ? "❌" : d.cause.startsWith("Offset delivery count") ? "🔄" : "✉️"}<span class="count">delivery-count=${d.deliveryCount}</span></div>
+        <div class="info">
+          <span class="cause">${esc(d.cause)}</span><br>
+          from <code>${esc(d.originalTopic)}</code> #${d.originalPartition}@${d.originalOffset} · failed in <code>${esc(d.failedShareGroup)}</code><br>
+          key <code>${esc(d.key)}</code>
+          <span class="body ${bad ? "bad" : ""}" title="${esc(d.body)}">${esc(d.body)}</span>
+        </div>
+        <div class="when">offset ${d.offset}<br>${new Date(d.timestamp).toLocaleString()}</div>
+      </div>`;
+  }
+
+  function topicCard(topic, deadLetters) {
+    return `
+      <section class="topic dlq" id="${id(topic.name)}" style="scroll-margin-top:24px">
+        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)} · dead letter queue</div>
+        <h2>${esc(topic.name)}<span class="badge dlq">DLQ</span></h2>
+        ${deadList(topic, deadLetters)}
+      </section>`;
+  }
+
+  function render(state) {
+    const dot = document.getElementById("dot");
+    dot.className = "dot" + (state.error ? " err" : "");
+    document.getElementById("status").textContent = state.error
+      ? "Error: " + state.error
+      : `Updated ${new Date(state.updatedAt).toLocaleTimeString("en-GB", { hour12: false })}`;
+    if (!state.topics.length) return;
+    const consumedNames = new Set(state.shareGroups.flatMap((g) => g.topics));
+    const orphans = state.topics.filter((t) => t.isDeadLetter && !consumedNames.has(t.name));
+    const domainGroups = state.shareGroups.filter((g) => !consumesDeadLetter(g, state.topics));
+    const deadLetterGroups = state.shareGroups.filter((g) => consumesDeadLetter(g, state.topics));
+    document.getElementById("main").innerHTML = [
+      ...domainGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...deadLetterGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...orphans.map((t) => topicCard(t, state.deadLetters)),
+    ].join("");
+    drawArrows();
+  }
+
+  async function poll() {
+    try {
+      const state = await (await fetch("/api/state")).json();
+      render(state);
+    } catch (e) {
+      document.getElementById("status").textContent = "Viewer unreachable: " + e.message;
+      document.getElementById("dot").className = "dot err";
+    }
+  }
+  window.addEventListener("resize", drawArrows);
+  poll();
+  setInterval(poll, 1000);
+</script>
+</body>
+</html>
