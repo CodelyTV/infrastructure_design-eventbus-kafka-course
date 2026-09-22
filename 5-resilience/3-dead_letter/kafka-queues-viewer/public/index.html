@@ -178,30 +178,23 @@
       </div>`;
   }
 
-  function arrow(x0, fromY, x1, toY) {
-    const angle = Math.atan2(toY - fromY, x1 - x0);
-    const tip = (dx, dy) => `${x1 + dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
-    return `<path d="M ${x0} ${fromY} L ${x1} ${toY}" /><polygon points="${tip(18, 0)} ${tip(0, -8)} ${tip(0, 8)}" />`;
-  }
-
   function drawArrows() {
     for (const body of document.querySelectorAll(".group-body")) {
       const svg = body.querySelector(".arrows");
       if (!svg) continue;
       const box = svg.getBoundingClientRect();
-      const shares = [...body.querySelectorAll(".share")];
-      const paths = [];
-      for (const ear of body.querySelectorAll(".ear")) {
-        const from = ear.getBoundingClientRect();
-        const fromY = from.top + from.height / 2 - box.top;
-        const topics = new Set(ear.dataset.topics.split("|").filter(Boolean));
-        for (const share of shares.filter((el) => topics.has(el.dataset.topic))) {
-          const r = share.getBoundingClientRect();
-          paths.push(arrow(box.width - 4, fromY, 18, r.top + r.height / 2 - box.top));
-        }
+      const x0 = box.width - 4, x1 = 18;
+      const centerY = (el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2 - box.top; };
+      const parts = [];
+      for (const share of body.querySelectorAll(".share")) {
+        const toY = centerY(share);
+        const ears = [...body.querySelectorAll(".ear")].filter((ear) => ear.dataset.topics.split("|").includes(share.dataset.topic));
+        if (!ears.length) continue;
+        for (const ear of ears) parts.push(`<path d="M ${x0} ${centerY(ear)} L ${x1} ${toY}" />`);
+        parts.push(`<polygon points="0,${toY} ${x1},${toY - 8} ${x1},${toY + 8}" />`);
       }
       svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
-      svg.innerHTML = paths.join("");
+      svg.innerHTML = parts.join("");
     }
   }
 
