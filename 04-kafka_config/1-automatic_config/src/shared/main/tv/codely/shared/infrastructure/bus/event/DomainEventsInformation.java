@@ -7,8 +7,6 @@ import tv.codely.shared.domain.bus.event.DomainEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -32,14 +30,6 @@ public final class DomainEventsInformation {
 
     public List<String> eventNames() {
         return indexedDomainEvents.keySet().stream().sorted().toList();
-    }
-
-    public String forClass(Class<? extends DomainEvent> domainEventClass) {
-        return indexedDomainEvents.entrySet()
-                                  .stream()
-                                  .filter(entry -> Objects.equals(entry.getValue(), domainEventClass))
-                                  .map(Map.Entry::getKey)
-                                  .findFirst().orElse("");
     }
 
     private HashMap<String, Class<? extends DomainEvent>> formatEvents(
