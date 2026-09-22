@@ -34,9 +34,11 @@
   .topic h2 .badge.dlq { background: #ff927a; color: #1b2130; }
   .meta { position: absolute; right: 30px; top: 22px; font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
   .meta b { color: var(--text); }
-  .row { display: grid; grid-template-columns: 640px 200px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .row { display: grid; grid-template-columns: 640px 200px 1fr; align-items: center; gap: 12px; margin: 12px 0; scroll-margin-top: 24px; }
   .share { background: var(--orange); border-radius: 18px; padding: 16px 28px 16px 20px; color: #1b2130; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
   .share .name { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600; word-break: break-all; }
+  .share .sub { font-size: 11px; font-weight: 500; opacity: .75; margin-top: -6px; }
+  .group-cfg { display: flex; justify-content: flex-end; margin-top: 6px; }
   .share .stats { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; }
   .share .stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; flex: none; }
   .share .stat b { font-size: 26px; line-height: 1; font-weight: 700; }
@@ -68,13 +70,11 @@
   .consumer .ears .state { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.35); color: var(--text); align-self: center; }
   .consumer .ears .state.Stable { background: var(--green); color: #fff; }
   .consumer .ears .state.Empty, .consumer .ears .state.Dead { background: rgba(0,0,0,.35); color: var(--muted); }
-  .consumer .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
-  .consumer .cfg .k { text-decoration: underline wavy rgba(229,72,77,.8) 1px; text-underline-offset: 4px; }
-  .consumer .cfg a { color: var(--yellow); }
-  .consumer .cfg .dim { color: var(--muted); text-decoration: none; }
+  .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
+  .cfg a { color: var(--yellow); }
   .members { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
   .empty { text-align: center; color: var(--muted); padding: 18px; font-size: 15px; }
-  .dead-list { display: grid; gap: 10px; margin-top: 8px; }
+  .dead-list { display: grid; gap: 10px; margin-top: 18px; }
   .dead { display: grid; grid-template-columns: 150px 1fr auto; gap: 16px; align-items: center; background: rgba(0,0,0,.25); border-radius: 14px; padding: 12px 16px; }
   .dead .icon { font-size: 34px; text-align: center; position: relative; padding-bottom: 10px; }
   .dead .icon .count { white-space: nowrap; position: absolute; left: 50%; transform: translateX(-50%); bottom: -12px; background: var(--text); color: #1b2130; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 6px; font-family: "JetBrains Mono", monospace; }
@@ -156,13 +156,11 @@
     const ears = active
       ? group.members.map((m) => `<span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}">👂</span>`).join("")
       : '<span class="ear off" title="no consumer connected">👂</span>';
-    const cfg = group.deadLetterTopic
-      ? `<div class="cfg"><span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a><br><span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}</div>`
-      : `<div class="cfg"><span class="k">share.auto.offset.reset</span>: ${esc(group.autoOffsetReset)}<br><span class="dim">share.delivery.count.limit: ${group.deliveryCountLimit} · lock ${group.recordLockMs / 1000}s</span></div>`;
     return `
-      <div class="row">
+      <div class="row" id="${id(topic.name)}">
         <div class="share">
-          <div class="name">${esc(group.name)}</div>
+          <div class="name">${esc(topic.name)}</div>
+          <div class="sub"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"} · retention ${fmtRetention(topic.retentionMs)}</div>
           <div class="stats">
             <div class="envelopes">${envelopes(items)}</div>
             <div style="display:flex;gap:10px">
@@ -175,10 +173,43 @@
         <div class="arrow ${active ? "" : "idle"}"><svg viewBox="0 0 220 24" preserveAspectRatio="none"><line x1="14" y1="12" x2="218" y2="12" /><polygon points="0,12 18,4 18,20" /></svg></div>
         <div class="consumer">
           <div class="ears">${ears}<span class="state ${esc(group.state)}">${esc(group.state)} · ${group.memberCount} member${group.memberCount === 1 ? "" : "s"}</span></div>
-          ${cfg}
           ${active ? `<div class="members">${group.members.map((m) => esc(m.host) + " · " + m.assignment.map(esc).join(", ")).join("<br>")}</div>` : ""}
         </div>
       </div>`;
+  }
+
+  function groupConfig(group) {
+    const lines = group.deadLetterTopic
+      ? [
+          `<span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a>`,
+          `<span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}`,
+        ]
+      : [];
+    lines.push(`<span class="k">share.delivery.count.limit</span>: ${group.deliveryCountLimit}`);
+    lines.push(`<span class="k">share.record.lock.duration.ms</span>: ${group.recordLockMs}`);
+    return `<div class="cfg">${lines.join("<br>")}</div>`;
+  }
+
+  function deadList(topic, deadLetters) {
+    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
+    return `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>`;
+  }
+
+  function consumesDeadLetter(group, topics) {
+    return group.topics.some((name) => topics.find((t) => t.name === name)?.isDeadLetter);
+  }
+
+  function groupCard(group, topics, deadLetters) {
+    const consumed = group.topics.map((name) => topics.find((t) => t.name === name)).filter(Boolean);
+    const dlq = consumesDeadLetter(group, topics);
+    return `
+      <section class="topic ${dlq ? "dlq" : ""}" id="${id(group.name)}">
+        <div class="meta"><b>${group.memberCount}</b> member${group.memberCount === 1 ? "" : "s"} · ${esc(group.state)}<br>${consumed.length} topic${consumed.length === 1 ? "" : "s"}${dlq ? " · dead letter queue" : ""}</div>
+        <h2>${esc(group.name)}</h2>
+        ${consumed.length ? consumed.map((t) => shareRow(t, group, deadLetters)).join("") : '<div class="empty">This share group consumes no topic</div>'}
+        <div class="group-cfg">${groupConfig(group)}</div>
+        ${consumed.filter((t) => t.isDeadLetter).map((t) => deadList(t, deadLetters)).join("")}
+      </section>`;
   }
 
   function deadRow(d) {
@@ -196,16 +227,12 @@
       </div>`;
   }
 
-  function topicCard(topic, groups, deadLetters) {
-    const consumers = groups.filter((g) => g.topics.includes(topic.name));
-    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
-    const producedBy = topic.isDeadLetter ? [...new Set(deadHere.map((d) => d.failedShareGroup))] : [];
+  function topicCard(topic, deadLetters) {
     return `
-      <section class="topic ${topic.isDeadLetter ? "dlq" : ""}" id="${id(topic.name)}">
-        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)}${topic.isDeadLetter ? " · dead letter queue" : ""}</div>
-        <h2>${esc(topic.name)}<span class="badge ${topic.isDeadLetter ? "dlq" : ""}">${topic.isDeadLetter ? "DLQ" : "topic"}</span></h2>
-        ${consumers.length ? consumers.map((g) => shareRow(topic, g, deadLetters)).join("") : '<div class="empty">No share group consumes this topic</div>'}
-        ${topic.isDeadLetter ? `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>` : ""}
+      <section class="topic dlq" id="${id(topic.name)}" style="scroll-margin-top:24px">
+        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)} · dead letter queue</div>
+        <h2>${esc(topic.name)}<span class="badge dlq">DLQ</span></h2>
+        ${deadList(topic, deadLetters)}
       </section>`;
   }
 
@@ -216,9 +243,15 @@
       ? "Error: " + state.error
       : `${state.topics.length} topics · ${state.shareGroups.length} share groups · ${state.deadLetters.length} dead letters · updated ${new Date(state.updatedAt).toLocaleTimeString()}`;
     if (!state.topics.length) return;
-    const domain = state.topics.filter((t) => !t.isDeadLetter);
-    const dlq = state.topics.filter((t) => t.isDeadLetter);
-    document.getElementById("main").innerHTML = [...domain, ...dlq].map((t) => topicCard(t, state.shareGroups, state.deadLetters)).join("");
+    const consumedNames = new Set(state.shareGroups.flatMap((g) => g.topics));
+    const orphans = state.topics.filter((t) => t.isDeadLetter && !consumedNames.has(t.name));
+    const domainGroups = state.shareGroups.filter((g) => !consumesDeadLetter(g, state.topics));
+    const deadLetterGroups = state.shareGroups.filter((g) => consumesDeadLetter(g, state.topics));
+    document.getElementById("main").innerHTML = [
+      ...domainGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...deadLetterGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...orphans.map((t) => topicCard(t, state.deadLetters)),
+    ].join("");
   }
 
   let last = null;
