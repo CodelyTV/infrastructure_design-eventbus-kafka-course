@@ -40,7 +40,9 @@ public final class KafkaEventBus implements EventBus {
     private void publish(String eventId, String eventName, String body) {
         try {
             template.send(eventName, eventId, body).get(PUBLISH_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
-        } catch (Exception error) {
+            // Aggregate version
+            // template.send(eventName.substring(0, eventName.lastIndexOf('.')), eventId, body).get(PUBLISH_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception error) {
             failover.publish(eventId, eventName, body);
         }
     }

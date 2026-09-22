@@ -13,11 +13,11 @@ public final class GenerateKafkaTopicsTerraformCommand extends ConsoleCommand {
 	public static final Path DEFAULT_OUTPUT = Path.of("etc/terraform/kafka/topics.tf");
 
 	private final DomainEventTopics topics;
-	private final KafkaTopicsTerraformGenerator terraform;
+	private final KafkaTopicsTerraformGenerator generator;
 
-	public GenerateKafkaTopicsTerraformCommand(DomainEventTopics topics, KafkaTopicsTerraformGenerator terraform) {
+	public GenerateKafkaTopicsTerraformCommand(DomainEventTopics topics, KafkaTopicsTerraformGenerator generator) {
 		this.topics = topics;
-		this.terraform = terraform;
+		this.generator = generator;
 	}
 
 	@Override
@@ -26,7 +26,7 @@ public final class GenerateKafkaTopicsTerraformCommand extends ConsoleCommand {
 
 		try {
 			Files.createDirectories(output.getParent());
-			Files.writeString(output, terraform.generate(topics.all()));
+			Files.writeString(output, generator.generate(topics.all()));
 
 			log(String.format("Generated %d Kafka topics in %s", topics.all().size(), output));
 		} catch (IOException exception) {
