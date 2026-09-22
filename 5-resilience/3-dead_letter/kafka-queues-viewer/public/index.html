@@ -28,7 +28,7 @@
   .status .dot.err { background: var(--red); }
   main { padding: 0 40px 60px; display: grid; gap: 22px; }
   .topic { background: var(--card); border-radius: 26px; padding: 22px 34px 26px; position: relative; }
-  .topic.dlq { background: var(--card-dark); border: 1px solid rgba(243,154,60,.25); }
+  .topic.dlq { background: var(--card-dark); border: 1px solid #ff927a; }
   .topic h2 { margin: 0 0 18px; text-align: center; font-size: 24px; font-weight: 500; }
   .topic h2 .badge { display: inline-block; font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 10px; padding: 3px 9px; border-radius: 999px; background: #78cfff; color: #1b2130; }
   .topic h2 .badge.dlq { background: #ff927a; color: #1b2130; }
@@ -166,11 +166,14 @@
   function consumerBlock(group) {
     const active = group.memberCount > 0;
     const members = active
-      ? group.members.map((m) => `
+      ? group.members.map((m) => {
+          const topics = [...new Set(m.assignment.map((a) => a.replace(/:\d+$/, "")))];
+          return `
           <div class="member">
-            <span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}" data-topics="${esc(m.assignment.map((a) => a.replace(/:\d+$/, "")).join("|"))}">👂</span>
-            <span class="members">${m.assignment.map(esc).join(", ")}</span>
-          </div>`).join("")
+            <span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}" data-topics="${esc(topics.join("|"))}">👂</span>
+            <span class="members">${topics.map(esc).join(", ")}</span>
+          </div>`;
+        }).join("")
       : `<div class="member"><span class="ear off" title="no consumer connected" data-topics="${esc(group.topics.join("|"))}">👂</span></div>`;
     return `
       <div class="consumer">
@@ -190,8 +193,13 @@
         const toY = centerY(share);
         const ears = [...body.querySelectorAll(".ear")].filter((ear) => ear.dataset.topics.split("|").includes(share.dataset.topic));
         if (!ears.length) continue;
-        for (const ear of ears) parts.push(`<path d="M ${x0} ${centerY(ear)} L ${x1} ${toY}" />`);
-        parts.push(`<polygon points="0,${toY} ${x1},${toY - 8} ${x1},${toY + 8}" />`);
+        const fromYs = ears.map(centerY);
+        const meanY = fromYs.reduce((a, y) => a + y, 0) / fromYs.length;
+        const angle = Math.atan2(meanY - toY, x0);
+        const at = (dx, dy) => `${dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
+        const [baseX, baseY] = at(x1, 0).split(",");
+        for (const y of fromYs) parts.push(`<path d="M ${x0} ${y} L ${baseX} ${baseY}" />`);
+        parts.push(`<polygon points="0,${toY} ${at(x1, -8)} ${at(x1, 8)}" />`);
       }
       svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
       svg.innerHTML = parts.join("");
@@ -224,7 +232,6 @@
     const dlq = consumesDeadLetter(group, topics);
     return `
       <section class="topic ${dlq ? "dlq" : ""}" id="${id(group.name)}">
-        <div class="meta"><b>${group.memberCount}</b> member${group.memberCount === 1 ? "" : "s"} · ${esc(group.state)}<br>${consumed.length} topic${consumed.length === 1 ? "" : "s"}${dlq ? " · dead letter queue" : ""}</div>
         <h2>${esc(group.name)}</h2>
         ${consumed.length ? `
         <div class="group-body">
