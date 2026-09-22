@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import tv.codely.shared.infrastructure.bus.event.DomainEventsInformation;
 import tv.codely.shared.infrastructure.bus.event.kafka.DomainEventTopics;
-import tv.codely.shared.infrastructure.bus.event.kafka.KafkaTopicsTerraformGenerator;
 
 final class GenerateKafkaTopicsTerraformCommandShould {
 
@@ -17,7 +16,7 @@ final class GenerateKafkaTopicsTerraformCommandShould {
 	void keep_the_terraform_topics_in_sync_with_the_domain_events() throws IOException {
 		DomainEventTopics topics = new DomainEventTopics(new DomainEventsInformation());
 
-		String expected = new KafkaTopicsTerraformGenerator().generate(topics.all());
+		String expected = GenerateKafkaTopicsTerraformCommand.generate(topics.all());
 		String current = Files.readString(GenerateKafkaTopicsTerraformCommand.DEFAULT_OUTPUT);
 
 		assertEquals(
