@@ -14,7 +14,7 @@ make start-kafka-queues-viewer  # http://localhost:8050
 ## What it shows
 
 - Every topic, with its total messages, partitions and retention.
-- For each topic, the share groups that consume it: processed, pending and dead messages, the connected consumers, and the dead letter configuration of the group.
+- Every share group, with the topics it consumes: processed, pending and dead messages per topic, the connected consumers, and the dead letter configuration of the group.
 - Every dead letter topic, with the records it contains and the `__dlq.errors.*` headers Kafka adds to them.
 
 ## Settings
@@ -24,4 +24,4 @@ make start-kafka-queues-viewer  # http://localhost:8050
 | `PORT`            | `8050`           |
 | `KAFKA_SERVICE`   | `shared_kafka`   |
 | `KAFKA_BOOTSTRAP` | `localhost:9092` |
-| `REFRESH_MS`      | `4000`           |
+| `REFRESH_MS`      | `1000`           |

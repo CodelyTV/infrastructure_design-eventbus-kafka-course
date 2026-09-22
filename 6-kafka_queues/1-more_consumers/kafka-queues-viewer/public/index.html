@@ -28,15 +28,19 @@
   .status .dot.err { background: var(--red); }
   main { padding: 0 40px 60px; display: grid; gap: 22px; }
   .topic { background: var(--card); border-radius: 26px; padding: 22px 34px 26px; position: relative; }
-  .topic.dlq { background: var(--card-dark); border: 1px solid rgba(243,154,60,.25); }
+  .topic.dlq { background: var(--card-dark); border: 1px solid #ff927a; }
   .topic h2 { margin: 0 0 18px; text-align: center; font-size: 24px; font-weight: 500; }
   .topic h2 .badge { display: inline-block; font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 10px; padding: 3px 9px; border-radius: 999px; background: #78cfff; color: #1b2130; }
   .topic h2 .badge.dlq { background: #ff927a; color: #1b2130; }
   .meta { position: absolute; right: 30px; top: 22px; font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
   .meta b { color: var(--text); }
-  .row { display: grid; grid-template-columns: 640px 200px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .group-body { display: grid; grid-template-columns: 640px 200px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .topics { display: grid; gap: 12px; }
+  .share { scroll-margin-top: 24px; }
   .share { background: var(--orange); border-radius: 18px; padding: 16px 28px 16px 20px; color: #1b2130; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
   .share .name { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600; word-break: break-all; }
+  .share .sub { font-size: 11px; font-weight: 500; opacity: .75; margin-top: -6px; }
+  .group-cfg { display: flex; justify-content: flex-end; margin-top: 6px; }
   .share .stats { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; }
   .share .stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; flex: none; }
   .share .stat b { font-size: 26px; line-height: 1; font-weight: 700; }
@@ -48,33 +52,27 @@
   .cell .dc.hot { background: #1b2130; color: var(--yellow); }
   .cell .dc.none { visibility: hidden; }
   .cell .more { font-size: 9px; line-height: 16px; color: #1b2130; opacity: .7; font-weight: 600; }
-  .env { width: 22px; height: 16px; flex: none; display: block; border-radius: 3px; background: #fff; border: 1px solid #c56a1a; position: relative; opacity: .95; }
-  .env::after { content: ""; position: absolute; left: 3px; right: 3px; top: 2px; height: 6px; border-left: 1px solid #c56a1a; border-right: 1px solid #c56a1a; border-bottom: 1px solid #c56a1a; transform: skewY(0); clip-path: polygon(0 0, 50% 100%, 100% 0); background: #f0e0c8; }
-  .env.done { background: #d9d9d9; opacity: .55; }
-  .env.acquired { box-shadow: 0 0 0 2px var(--yellow); }
-  .env.dead { background: none; border: none; }
-  .env.dead::after { display: none; }
+  .env { width: 22px; height: 16px; flex: none; display: block; position: relative; }
+  .env::before { content: "✉️"; position: absolute; inset: 0; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .env.done::before { content: "✅"; font-size: 13px; }
+  .env.acquired { border-radius: 4px; box-shadow: 0 0 0 2px var(--yellow); }
+  .env.dead { display: block; background: none; padding: 0; border-radius: 0; }
   .env.dead.redelivery::before { content: "🔄"; }
-  .env.dead::before { content: "❌"; position: absolute; inset: 0; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 1px; }
-  .arrow { display: flex; align-items: center; justify-content: center; height: 40px; }
-  .arrow svg { width: 100%; height: 24px; overflow: visible; }
-  .arrow line { stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; }
-  .arrow polygon { fill: var(--yellow); }
+  .env.dead::before { content: "❌"; font-size: 13px; }
+  .arrows { width: 100%; height: 100%; align-self: stretch; overflow: visible; }
+  .arrows path { stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; fill: none; }
+  .arrows polygon { fill: var(--yellow); }
+  .arrows.idle { opacity: .35; }
 
-  .consumer { display: flex; flex-direction: column; gap: 8px; }
-  .consumer .ears { display: flex; gap: 8px; align-items: center; font-size: 40px; line-height: 1; }
-  .consumer .ears .ear { position: relative; }
-  .consumer .ears .ear.off { filter: grayscale(1); opacity: .3; }
-  .consumer .ears .state { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.35); color: var(--text); align-self: center; }
-  .consumer .ears .state.Stable { background: var(--green); color: #fff; }
-  .consumer .ears .state.Empty, .consumer .ears .state.Dead { background: rgba(0,0,0,.35); color: var(--muted); }
-  .consumer .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
-  .consumer .cfg .k { text-decoration: underline wavy rgba(229,72,77,.8) 1px; text-underline-offset: 4px; }
-  .consumer .cfg a { color: var(--yellow); }
-  .consumer .cfg .dim { color: var(--muted); text-decoration: none; }
+  .consumer { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .consumer .member { display: flex; gap: 12px; align-items: center; }
+  .consumer .ear { font-size: 40px; line-height: 1; }
+  .consumer .ear.off { filter: grayscale(1); opacity: .3; }
+  .cfg { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--yellow); line-height: 1.6; word-break: break-all; }
+  .cfg a { color: var(--yellow); }
   .members { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
   .empty { text-align: center; color: var(--muted); padding: 18px; font-size: 15px; }
-  .dead-list { display: grid; gap: 10px; margin-top: 8px; }
+  .dead-list { display: grid; gap: 10px; margin-top: 18px; }
   .dead { display: grid; grid-template-columns: 150px 1fr auto; gap: 16px; align-items: center; background: rgba(0,0,0,.25); border-radius: 14px; padding: 12px 16px; }
   .dead .icon { font-size: 34px; text-align: center; position: relative; padding-bottom: 10px; }
   .dead .icon .count { white-space: nowrap; position: absolute; left: 50%; transform: translateX(-50%); bottom: -12px; background: var(--text); color: #1b2130; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 6px; font-family: "JetBrains Mono", monospace; }
@@ -84,8 +82,7 @@
   .dead .info .body { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; opacity: .85; }
   .dead .info .body.bad { color: #ff9a9e; }
   .dead .when { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
-  .toggle { background: none; border: 1px solid rgba(255,255,255,.2); color: var(--text); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
-  @media (max-width: 1100px) { .row { grid-template-columns: 1fr; } .arrow { transform: rotate(90deg); height: 30px; width: 80px; margin: 0 auto; } }
+  @media (max-width: 1100px) { .group-body { grid-template-columns: 1fr; } .arrows { display: none; } }
 </style>
 </head>
 <body>
@@ -103,10 +100,9 @@
     <div><span class="emoji">👂</span>Consumer</div>
   </div>
 </header>
-<div class="status"><span><span class="dot" id="dot"></span><span id="status">Connecting…</span></span><button class="toggle" id="toggleDone">Hide processed envelopes</button></div>
+<div class="status"><span><span class="dot" id="dot"></span><span id="status">Connecting…</span></span></div>
 <main id="main"><div class="empty">Loading the cluster…</div></main>
 <script>
-  let showDone = true;
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const id = (s) => "t-" + s.replace(/[^a-z0-9]/gi, "_");
   const fmtRetention = (ms) => (!ms || ms === "-1") ? "∞" : Math.round(Number(ms) / 86400000) + "d";
@@ -126,7 +122,7 @@
         if (dead != null || (flight && flight.state === 4 && flight.deliveryCount >= limit)) {
           items.push({ kind: "dead", reason: dead ?? "redelivery" });
         } else if (o < start || (flight && (flight.state === 2 || flight.state === 4))) {
-          if (showDone) items.push({ kind: "done" });
+          items.push({ kind: "done" });
         } else {
           items.push({ kind: flight && flight.state === 1 ? "acquired" : "pending", count: flight ? flight.deliveryCount : 0 });
         }
@@ -138,12 +134,12 @@
   function envelopes(items) {
     const MAX = 40;
     const hidden = Math.max(items.length - MAX, 0);
-    const shown = items.slice(hidden).reverse();
-    return shown.map((it) => {
+    const shown = items.slice(hidden);
+    return (hidden ? `<span class="cell"><i class="dc none"></i><span class="more">+${hidden}</span></span>` : "") + shown.map((it) => {
       if (it.kind === "done") return '<span class="cell"><i class="dc none"></i><span class="env done"></span></span>';
       if (it.kind === "dead") return `<span class="cell"><i class="dc none"></i><span class="env dead ${it.reason}"></span></span>`;
       return `<span class="cell"><i class="dc ${it.count > 1 ? "hot" : ""}">${it.count}</i><span class="env ${it.kind}"></span></span>`;
-    }).join("") + (hidden ? `<span class="cell"><i class="dc none"></i><span class="more">+${hidden}</span></span>` : "");
+    }).join("");
   }
 
   function shareRow(topic, group, deadLetters) {
@@ -152,33 +148,100 @@
     const pending = parts.reduce((a, p) => a + (p.pending || 0), 0);
     const items = cells(topic, group, deadLetters, group.deliveryCountLimit || 5);
     const dead = items.filter((i) => i.kind === "dead").length;
-    const active = group.memberCount > 0;
-    const ears = active
-      ? group.members.map((m) => `<span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}">👂</span>`).join("")
-      : '<span class="ear off" title="no consumer connected">👂</span>';
-    const cfg = group.deadLetterTopic
-      ? `<div class="cfg"><span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a><br><span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}</div>`
-      : `<div class="cfg"><span class="k">share.auto.offset.reset</span>: ${esc(group.autoOffsetReset)}<br><span class="dim">share.delivery.count.limit: ${group.deliveryCountLimit} · lock ${group.recordLockMs / 1000}s</span></div>`;
     return `
-      <div class="row">
-        <div class="share">
-          <div class="name">${esc(group.name)}</div>
-          <div class="stats">
-            <div class="envelopes">${envelopes(items)}</div>
-            <div style="display:flex;gap:10px">
-              <div class="stat"><b>${processed}</b><span>processed</span></div>
-              <div class="stat pending"><b>${pending}</b><span>pending</span></div>
-              ${dead ? `<div class="stat"><b style="color:var(--red)">${dead}</b><span>dead</span></div>` : ""}
-            </div>
+      <div class="share" id="${id(topic.name)}" data-topic="${esc(topic.name)}">
+        <div class="name">${esc(topic.name)}</div>
+        <div class="sub"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"} · retention ${fmtRetention(topic.retentionMs)}</div>
+        <div class="stats">
+          <div class="envelopes">${envelopes(items)}</div>
+          <div style="display:flex;gap:10px">
+            <div class="stat"><b>${processed}</b><span>processed</span></div>
+            <div class="stat pending"><b>${pending}</b><span>pending</span></div>
+            ${dead ? `<div class="stat"><b style="color:var(--red)">${dead}</b><span>dead</span></div>` : ""}
           </div>
         </div>
-        <div class="arrow ${active ? "" : "idle"}"><svg viewBox="0 0 220 24" preserveAspectRatio="none"><line x1="14" y1="12" x2="218" y2="12" /><polygon points="0,12 18,4 18,20" /></svg></div>
-        <div class="consumer">
-          <div class="ears">${ears}<span class="state ${esc(group.state)}">${esc(group.state)} · ${group.memberCount} member${group.memberCount === 1 ? "" : "s"}</span></div>
-          ${cfg}
-          ${active ? `<div class="members">${group.members.map((m) => esc(m.host) + " · " + m.assignment.map(esc).join(", ")).join("<br>")}</div>` : ""}
-        </div>
       </div>`;
+  }
+
+  function consumerBlock(group) {
+    const active = group.memberCount > 0;
+    const members = active
+      ? group.members.map((m) => {
+          const topics = [...new Set(m.assignment.map((a) => a.replace(/:\d+$/, "")))];
+          return `
+          <div class="member">
+            <span class="ear" title="${esc(m.clientId)} @ ${esc(m.host)}" data-topics="${esc(topics.join("|"))}">👂</span>
+            <span class="members">${topics.map(esc).join(", ")}</span>
+          </div>`;
+        }).join("")
+      : `<div class="member"><span class="ear off" title="no consumer connected" data-topics="${esc(group.topics.join("|"))}">👂</span></div>`;
+    return `
+      <div class="consumer">
+        ${members}
+      </div>`;
+  }
+
+  function drawArrows() {
+    for (const body of document.querySelectorAll(".group-body")) {
+      const svg = body.querySelector(".arrows");
+      if (!svg) continue;
+      const box = svg.getBoundingClientRect();
+      const x0 = box.width - 4, x1 = 18;
+      const centerY = (el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2 - box.top; };
+      const parts = [];
+      for (const share of body.querySelectorAll(".share")) {
+        const toY = centerY(share);
+        const ears = [...body.querySelectorAll(".ear")].filter((ear) => ear.dataset.topics.split("|").includes(share.dataset.topic));
+        if (!ears.length) continue;
+        const fromYs = ears.map(centerY);
+        const meanY = fromYs.reduce((a, y) => a + y, 0) / fromYs.length;
+        const angle = Math.atan2(meanY - toY, x0);
+        const at = (dx, dy) => `${dx * Math.cos(angle) - dy * Math.sin(angle)},${toY + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
+        const [baseX, baseY] = at(x1, 0).split(",");
+        for (const y of fromYs) parts.push(`<path d="M ${x0} ${y} L ${baseX} ${baseY}" />`);
+        parts.push(`<polygon points="0,${toY} ${at(x1, -8)} ${at(x1, 8)}" />`);
+      }
+      svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+      svg.innerHTML = parts.join("");
+    }
+  }
+
+  function groupConfig(group) {
+    const lines = group.deadLetterTopic
+      ? [
+          `<span class="k">errors.deadletterqueue.topic.name</span>: <a href="#${id(group.deadLetterTopic)}">${esc(group.deadLetterTopic)}</a>`,
+          `<span class="k">errors.deadletterqueue.copy.record.enable</span>: ${group.copyRecord}`,
+        ]
+      : [];
+    lines.push(`<span class="k">share.delivery.count.limit</span>: ${group.deliveryCountLimit}`);
+    lines.push(`<span class="k">share.record.lock.duration.ms</span>: ${group.recordLockMs}`);
+    return `<div class="cfg">${lines.join("<br>")}</div>`;
+  }
+
+  function deadList(topic, deadLetters) {
+    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
+    return `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>`;
+  }
+
+  function consumesDeadLetter(group, topics) {
+    return group.topics.some((name) => topics.find((t) => t.name === name)?.isDeadLetter);
+  }
+
+  function groupCard(group, topics, deadLetters) {
+    const consumed = group.topics.map((name) => topics.find((t) => t.name === name)).filter(Boolean);
+    const dlq = consumesDeadLetter(group, topics);
+    return `
+      <section class="topic ${dlq ? "dlq" : ""}" id="${id(group.name)}">
+        <h2>${esc(group.name)}</h2>
+        ${consumed.length ? `
+        <div class="group-body">
+          <div class="topics">${consumed.map((t) => shareRow(t, group, deadLetters)).join("")}</div>
+          <svg class="arrows ${group.memberCount > 0 ? "" : "idle"}" preserveAspectRatio="none"></svg>
+          ${consumerBlock(group)}
+        </div>` : '<div class="empty">This share group consumes no topic</div>'}
+        <div class="group-cfg">${groupConfig(group)}</div>
+        ${consumed.filter((t) => t.isDeadLetter).map((t) => deadList(t, deadLetters)).join("")}
+      </section>`;
   }
 
   function deadRow(d) {
@@ -196,16 +259,12 @@
       </div>`;
   }
 
-  function topicCard(topic, groups, deadLetters) {
-    const consumers = groups.filter((g) => g.topics.includes(topic.name));
-    const deadHere = deadLetters.filter((d) => d.topic === topic.name).sort((a, b) => b.offset - a.offset);
-    const producedBy = topic.isDeadLetter ? [...new Set(deadHere.map((d) => d.failedShareGroup))] : [];
+  function topicCard(topic, deadLetters) {
     return `
-      <section class="topic ${topic.isDeadLetter ? "dlq" : ""}" id="${id(topic.name)}">
-        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)}${topic.isDeadLetter ? " · dead letter queue" : ""}</div>
-        <h2>${esc(topic.name)}<span class="badge ${topic.isDeadLetter ? "dlq" : ""}">${topic.isDeadLetter ? "DLQ" : "topic"}</span></h2>
-        ${consumers.length ? consumers.map((g) => shareRow(topic, g, deadLetters)).join("") : '<div class="empty">No share group consumes this topic</div>'}
-        ${topic.isDeadLetter ? `<div class="dead-list">${deadHere.length ? deadHere.map(deadRow).join("") : '<div class="empty">No dead letters 🎉</div>'}</div>` : ""}
+      <section class="topic dlq" id="${id(topic.name)}" style="scroll-margin-top:24px">
+        <div class="meta"><b>${topic.endOffset}</b> messages · ${topic.partitions} partition${topic.partitions === 1 ? "" : "s"}<br>retention ${fmtRetention(topic.retentionMs)} · dead letter queue</div>
+        <h2>${esc(topic.name)}<span class="badge dlq">DLQ</span></h2>
+        ${deadList(topic, deadLetters)}
       </section>`;
   }
 
@@ -214,27 +273,32 @@
     dot.className = "dot" + (state.error ? " err" : "");
     document.getElementById("status").textContent = state.error
       ? "Error: " + state.error
-      : `${state.topics.length} topics · ${state.shareGroups.length} share groups · ${state.deadLetters.length} dead letters · updated ${new Date(state.updatedAt).toLocaleTimeString()}`;
+      : `Updated ${new Date(state.updatedAt).toLocaleTimeString("en-GB", { hour12: false })}`;
     if (!state.topics.length) return;
-    const domain = state.topics.filter((t) => !t.isDeadLetter);
-    const dlq = state.topics.filter((t) => t.isDeadLetter);
-    document.getElementById("main").innerHTML = [...domain, ...dlq].map((t) => topicCard(t, state.shareGroups, state.deadLetters)).join("");
+    const consumedNames = new Set(state.shareGroups.flatMap((g) => g.topics));
+    const orphans = state.topics.filter((t) => t.isDeadLetter && !consumedNames.has(t.name));
+    const domainGroups = state.shareGroups.filter((g) => !consumesDeadLetter(g, state.topics));
+    const deadLetterGroups = state.shareGroups.filter((g) => consumesDeadLetter(g, state.topics));
+    document.getElementById("main").innerHTML = [
+      ...domainGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...deadLetterGroups.map((g) => groupCard(g, state.topics, state.deadLetters)),
+      ...orphans.map((t) => topicCard(t, state.deadLetters)),
+    ].join("");
+    drawArrows();
   }
 
-  let last = null;
   async function poll() {
     try {
       const state = await (await fetch("/api/state")).json();
-      last = state;
       render(state);
     } catch (e) {
       document.getElementById("status").textContent = "Viewer unreachable: " + e.message;
       document.getElementById("dot").className = "dot err";
     }
   }
-  document.getElementById("toggleDone").onclick = (e) => { showDone = !showDone; e.target.textContent = showDone ? "Hide processed envelopes" : "Show processed envelopes"; if (last) render(last); };
+  window.addEventListener("resize", drawArrows);
   poll();
-  setInterval(poll, 3000);
+  setInterval(poll, 1000);
 </script>
 </body>
 </html>
