@@ -23,6 +23,44 @@ function kafka(tool, args) {
   });
 }
 
+async function topicIds() {
+  const out = await kafka("kafka-topics.sh", "--describe");
+  const result = {};
+  for (const line of out.split("\n")) {
+    const m = line.match(/Topic:\s+(\S+)\s+TopicId:\s+(\S+)/);
+    if (m) result[m[2]] = m[1];
+  }
+  return result;
+}
+
+async function shareState(ids) {
+  const out = await kafka(
+    "kafka-console-consumer.sh",
+    "--topic __share_group_state --from-beginning --timeout-ms 3000 " +
+      "--formatter org.apache.kafka.tools.consumer.group.share.ShareGroupStateMessageFormatter"
+  );
+  const state = {};
+  for (const raw of out.replace(/\r?\n/g, "").split(/(?<=})(?={"key")/)) {
+    let record;
+    try { record = JSON.parse(raw); } catch { continue; }
+    const key = record.key?.data;
+    const data = record.value?.data;
+    if (!key || !data) continue;
+    const topic = ids[key.topicId] || key.topicId;
+    const id = `${key.groupId}|${topic}|${key.partition}`;
+    if (record.key.type === 0 || !state[id]) state[id] = { startOffset: data.startOffset, offsets: {} };
+    const entry = state[id];
+    entry.startOffset = data.startOffset;
+    for (const batch of data.stateBatches || []) {
+      for (let o = batch.firstOffset; o <= batch.lastOffset; o++) {
+        entry.offsets[o] = { state: batch.deliveryState, deliveryCount: batch.deliveryCount };
+      }
+    }
+    for (const o of Object.keys(entry.offsets)) if (Number(o) < entry.startOffset) delete entry.offsets[o];
+  }
+  return state;
+}
+
 async function listTopics() {
   const out = await kafka("kafka-topics.sh", "--list");
   return out.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("__"));
@@ -161,13 +199,15 @@ function toNumber(value) {
 
 async function buildSnapshot() {
   const [topicNames, groupNames] = await Promise.all([listTopics(), listShareGroups()]);
-  const [offsets, configs, groupOffsets, members, states, groupConfigs] = await Promise.all([
+  const ids = await topicIds();
+  const [offsets, configs, groupOffsets, members, states, groupConfigs, inFlight] = await Promise.all([
     endOffsets(topicNames),
     topicConfigs(topicNames),
     shareGroupOffsets(),
     shareGroupMembers(),
     shareGroupStates(),
     shareGroupConfigs(),
+    shareState(ids),
   ]);
 
   const topics = topicNames.map((name) => {
@@ -191,7 +231,8 @@ async function buildSnapshot() {
       const end = (offsets[p.topic] || {})[p.partition];
       const pending = p.lag ?? 0;
       const processed = end == null ? null : Math.max(end - pending, 0);
-      return { ...p, endOffset: end ?? null, processed, pending };
+      const flight = inFlight[`${name}|${p.topic}|${p.partition}`] || { startOffset: p.startOffset, offsets: {} };
+      return { ...p, endOffset: end ?? null, processed, pending, stateStartOffset: flight.startOffset, inFlight: flight.offsets };
     });
     return {
       name,
