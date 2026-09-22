@@ -8,7 +8,7 @@ const PROJECT_DIR = path.resolve(__dirname, "..");
 const KAFKA_SERVICE = process.env.KAFKA_SERVICE || "shared_kafka";
 const BOOTSTRAP = process.env.KAFKA_BOOTSTRAP || "localhost:9092";
 const BIN = "/opt/kafka/bin";
-const REFRESH_MS = Number(process.env.REFRESH_MS || 4000);
+const REFRESH_MS = Number(process.env.REFRESH_MS || 1000);
 
 let snapshot = { updatedAt: null, error: null, topics: [], shareGroups: [], deadLetters: [] };
 let refreshing = false;

@@ -24,4 +24,4 @@ make start-kafka-queues-viewer  # http://localhost:8050
 | `PORT`            | `8050`           |
 | `KAFKA_SERVICE`   | `shared_kafka`   |
 | `KAFKA_BOOTSTRAP` | `localhost:9092` |
-| `REFRESH_MS`      | `4000`           |
+| `REFRESH_MS`      | `1000`           |
