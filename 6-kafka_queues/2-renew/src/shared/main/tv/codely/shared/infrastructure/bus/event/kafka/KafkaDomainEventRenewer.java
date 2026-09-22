@@ -6,10 +6,10 @@ import org.apache.kafka.clients.consumer.ShareConsumer;
 import tv.codely.shared.domain.Service;
 
 @Service
-public final class KafkaDomainEventLockRenewer {
+public final class KafkaDomainEventRenewer {
     private final ThreadLocal<Runnable> currentRenewal = new ThreadLocal<>();
 
-    public void setRenewThread(ConsumerRecord<String, String> record, ShareConsumer<?, ?> consumer) {
+    public void registerRenewal(ConsumerRecord<String, String> record, ShareConsumer<?, ?> consumer) {
         currentRenewal.set(() -> {
             consumer.acknowledge(record.topic(), record.partition(), record.offset(), AcknowledgeType.RENEW);
             consumer.commitSync();

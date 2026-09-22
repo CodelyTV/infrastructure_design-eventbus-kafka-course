@@ -11,10 +11,10 @@ import tv.codely.shared.domain.course.CourseRenamedDomainEvent;
 @Service
 @DomainEventSubscriber({CourseRenamedDomainEvent.class})
 public final class SendCourseRenamedEmailOnCourseRenamed {
-    private final CourseRenamedEmailSenderGateway sender;
+    private final CourseRenamedEmailSenderGateway gateway;
 
-    public SendCourseRenamedEmailOnCourseRenamed(CourseRenamedEmailSenderGateway sender) {
-        this.sender = sender;
+    public SendCourseRenamedEmailOnCourseRenamed(CourseRenamedEmailSenderGateway gateway) {
+        this.gateway = gateway;
     }
 
     @EventListener
@@ -22,6 +22,6 @@ public final class SendCourseRenamedEmailOnCourseRenamed {
         CourseId   id   = new CourseId(event.aggregateId());
         CourseName name = new CourseName(event.name());
 
-        sender.send(id, name);
+        gateway.send(id, name);
     }
 }

@@ -20,7 +20,7 @@ public final class KafkaDomainEventsShareConsumers {
     private final ShareConsumerFactory<String, String>                     consumerFactory;
     private final DomainEventJsonDeserializer                              deserializer;
     private final DomainEventSubscriberInvoker                             invoker;
-    private final KafkaDomainEventLockRenewer                              lockRenewer;
+    private final KafkaDomainEventRenewer lockRenewer;
     private final int                                                      consumersPerShareGroup;
     private final List<ShareKafkaMessageListenerContainer<String, String>> containers = new ArrayList<>();
 
@@ -30,7 +30,7 @@ public final class KafkaDomainEventsShareConsumers {
         ShareConsumerFactory<String, String> consumerFactory,
         DomainEventJsonDeserializer deserializer,
         DomainEventSubscriberInvoker invoker,
-        KafkaDomainEventLockRenewer lockRenewer,
+        KafkaDomainEventRenewer lockRenewer,
         Parameter config
     ) throws ParameterNotExist {
         this.allShareGroups       = allShareGroups;

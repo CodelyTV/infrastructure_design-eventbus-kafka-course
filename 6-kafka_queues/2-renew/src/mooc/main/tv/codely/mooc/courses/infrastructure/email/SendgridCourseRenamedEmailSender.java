@@ -6,7 +6,7 @@ import tv.codely.mooc.courses.domain.CourseRenamedEmailNotSent;
 import tv.codely.mooc.courses.domain.CourseRenamedEmailSenderGateway;
 import tv.codely.shared.domain.Logger;
 import tv.codely.shared.domain.Service;
-import tv.codely.shared.infrastructure.bus.event.kafka.KafkaDomainEventLockRenewer;
+import tv.codely.shared.infrastructure.bus.event.kafka.KafkaDomainEventRenewer;
 
 import java.time.Duration;
 
@@ -16,11 +16,11 @@ public final class SendgridCourseRenamedEmailSender implements CourseRenamedEmai
     private static final int      FAILURES_BEFORE_SUCCESS = 2;
     private static final Duration SENDGRID_LATENCY        = Duration.ofSeconds(3);
 
-    private final KafkaDomainEventLockRenewer lockRenewer;
+    private final KafkaDomainEventRenewer lockRenewer;
     private final Logger                      logger;
 
-    public SendgridCourseRenamedEmailSender(KafkaDomainEventLockRenewer lockRenewer, Logger logger) {
-        this.lockRenewer = lockRenewer;
+    public SendgridCourseRenamedEmailSender(KafkaDomainEventRenewer eventRenewer, Logger logger) {
+        this.lockRenewer = eventRenewer;
         this.logger      = logger;
     }
 
